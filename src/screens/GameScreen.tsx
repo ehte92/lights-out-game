@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useCallback } from 'react';
 import {
   View,
   Text,
@@ -54,7 +54,9 @@ export const GameScreen: React.FC = () => {
           await startNewGame();
         }
       } catch (error) {
-        console.error('Failed to initialize app:', error);
+        if (__DEV__) {
+          console.error('Failed to initialize app:', error);
+        }
       }
     };
     
@@ -87,22 +89,22 @@ export const GameScreen: React.FC = () => {
     transform: [{ scale: buttonScale.value }],
   }));
 
-  const handleButtonPress = (action: () => void) => {
+  const handleButtonPress = useCallback((action: () => void) => {
     buttonScale.value = withSequence(
       withSpring(0.95, { duration: 100 }),
       withSpring(1, { duration: 100 })
     );
     action();
-  };
+  }, [buttonScale]);
 
-  const handleNewGame = () => {
+  const handleNewGame = useCallback(() => {
     handleButtonPress(async () => {
       setShowVictory(false);
       await startNewGame();
     });
-  };
+  }, [handleButtonPress, setShowVictory, startNewGame]);
 
-  const handlePause = () => {
+  const handlePause = useCallback(() => {
     handleButtonPress(() => {
       if (isPaused) {
         resumeGame();
@@ -110,9 +112,9 @@ export const GameScreen: React.FC = () => {
         pauseGame();
       }
     });
-  };
+  }, [handleButtonPress, isPaused, resumeGame, pauseGame]);
 
-  const handleReset = () => {
+  const handleReset = useCallback(() => {
     Alert.alert(
       'Reset Game',
       'Are you sure you want to restart this puzzle?',
@@ -125,9 +127,9 @@ export const GameScreen: React.FC = () => {
         },
       ]
     );
-  };
+  }, [handleButtonPress, resetGame]);
 
-  const renderButton = (title: string, onPress: () => void, style?: any) => (
+  const renderButton = useCallback((title: string, onPress: () => void, style?: React.ComponentProps<typeof Animated.View>['style']) => (
     <Pressable onPress={() => handleButtonPress(onPress)}>
       <Animated.View style={[styles.button, style, buttonAnimatedStyle]}>
         <LinearGradient
@@ -140,7 +142,7 @@ export const GameScreen: React.FC = () => {
         </LinearGradient>
       </Animated.View>
     </Pressable>
-  );
+  ), [buttonAnimatedStyle, handleButtonPress]);
 
   if (!currentGame) {
     return (

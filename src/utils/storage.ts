@@ -1,10 +1,32 @@
 import { MMKV } from 'react-native-mmkv';
 import { GameStats, GameSettings, Achievement } from '../types/game';
 
-// Initialize MMKV storage instance
+// Generate a secure encryption key
+const generateEncryptionKey = (): string => {
+  // Use a combination of timestamp and random values for uniqueness
+  const timestamp = Date.now().toString();
+  const random = Math.random().toString(36).substring(2);
+  const packageId = 'lights-out-puzzle-game'; // From app.json slug
+  return `${packageId}-${timestamp}-${random}`;
+};
+
+// Get or create encryption key
+const getEncryptionKey = (): string => {
+  const keyStorage = new MMKV({ id: 'encryption-key-store' });
+  let key = keyStorage.getString('encryption_key');
+  
+  if (!key) {
+    key = generateEncryptionKey();
+    keyStorage.set('encryption_key', key);
+  }
+  
+  return key;
+};
+
+// Initialize MMKV storage instance with secure encryption key
 export const storage = new MMKV({
   id: 'lights-out-game',
-  encryptionKey: 'lights-out-secure-key-2025',
+  encryptionKey: getEncryptionKey(),
 });
 
 // Storage keys
@@ -48,7 +70,9 @@ export const getGameStats = (): GameStats => {
     const statsString = storage.getString(STORAGE_KEYS.GAME_STATS);
     return statsString ? JSON.parse(statsString) : DEFAULT_STATS;
   } catch (error) {
-    console.error('Error getting game stats:', error);
+    if (__DEV__) {
+      console.error('Error getting game stats:', error);
+    }
     return DEFAULT_STATS;
   }
 };
@@ -57,7 +81,9 @@ export const saveGameStats = (stats: GameStats): void => {
   try {
     storage.set(STORAGE_KEYS.GAME_STATS, JSON.stringify(stats));
   } catch (error) {
-    console.error('Error saving game stats:', error);
+    if (__DEV__) {
+      console.error('Error saving game stats:', error);
+    }
   }
 };
 
@@ -97,7 +123,9 @@ export const getSettings = (): GameSettings => {
     const settingsString = storage.getString(STORAGE_KEYS.SETTINGS);
     return settingsString ? { ...DEFAULT_SETTINGS, ...JSON.parse(settingsString) } : DEFAULT_SETTINGS;
   } catch (error) {
-    console.error('Error getting settings:', error);
+    if (__DEV__) {
+      console.error('Error getting settings:', error);
+    }
     return DEFAULT_SETTINGS;
   }
 };
@@ -108,7 +136,9 @@ export const saveSettings = (settings: Partial<GameSettings>): void => {
     const newSettings = { ...currentSettings, ...settings };
     storage.set(STORAGE_KEYS.SETTINGS, JSON.stringify(newSettings));
   } catch (error) {
-    console.error('Error saving settings:', error);
+    if (__DEV__) {
+      console.error('Error saving settings:', error);
+    }
   }
 };
 
@@ -118,7 +148,9 @@ export const getAchievements = (): Achievement[] => {
     const achievementsString = storage.getString(STORAGE_KEYS.ACHIEVEMENTS);
     return achievementsString ? JSON.parse(achievementsString) : [];
   } catch (error) {
-    console.error('Error getting achievements:', error);
+    if (__DEV__) {
+      console.error('Error getting achievements:', error);
+    }
     return [];
   }
 };
@@ -127,7 +159,9 @@ export const saveAchievements = (achievements: Achievement[]): void => {
   try {
     storage.set(STORAGE_KEYS.ACHIEVEMENTS, JSON.stringify(achievements));
   } catch (error) {
-    console.error('Error saving achievements:', error);
+    if (__DEV__) {
+      console.error('Error saving achievements:', error);
+    }
   }
 };
 
@@ -150,7 +184,9 @@ export const isDailyPuzzleCompleted = (date: string): boolean => {
   try {
     return storage.getBoolean(`${STORAGE_KEYS.DAILY_PUZZLE_COMPLETED}_${date}`) || false;
   } catch (error) {
-    console.error('Error checking daily puzzle completion:', error);
+    if (__DEV__) {
+      console.error('Error checking daily puzzle completion:', error);
+    }
     return false;
   }
 };
@@ -159,7 +195,9 @@ export const markDailyPuzzleCompleted = (date: string): void => {
   try {
     storage.set(`${STORAGE_KEYS.DAILY_PUZZLE_COMPLETED}_${date}`, true);
   } catch (error) {
-    console.error('Error marking daily puzzle completed:', error);
+    if (__DEV__) {
+      console.error('Error marking daily puzzle completed:', error);
+    }
   }
 };
 
@@ -168,7 +206,9 @@ export const getLastPlayed = (): number => {
   try {
     return storage.getNumber(STORAGE_KEYS.LAST_PLAYED) || 0;
   } catch (error) {
-    console.error('Error getting last played time:', error);
+    if (__DEV__) {
+      console.error('Error getting last played time:', error);
+    }
     return 0;
   }
 };
@@ -177,7 +217,9 @@ export const updateLastPlayed = (): void => {
   try {
     storage.set(STORAGE_KEYS.LAST_PLAYED, Date.now());
   } catch (error) {
-    console.error('Error updating last played time:', error);
+    if (__DEV__) {
+      console.error('Error updating last played time:', error);
+    }
   }
 };
 
@@ -186,6 +228,8 @@ export const clearAllData = (): void => {
   try {
     storage.clearAll();
   } catch (error) {
-    console.error('Error clearing all data:', error);
+    if (__DEV__) {
+      console.error('Error clearing all data:', error);
+    }
   }
 };

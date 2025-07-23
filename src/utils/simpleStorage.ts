@@ -46,7 +46,9 @@ export const getGameStats = async (): Promise<GameStats> => {
     const statsString = await AsyncStorage.getItem(STORAGE_KEYS.GAME_STATS);
     return statsString ? JSON.parse(statsString) : DEFAULT_STATS;
   } catch (error) {
-    console.error('Error getting game stats:', error);
+    if (__DEV__) {
+      console.error('Error getting game stats:', error);
+    }
     return DEFAULT_STATS;
   }
 };
@@ -55,7 +57,9 @@ export const saveGameStats = async (stats: GameStats): Promise<void> => {
   try {
     await AsyncStorage.setItem(STORAGE_KEYS.GAME_STATS, JSON.stringify(stats));
   } catch (error) {
-    console.error('Error saving game stats:', error);
+    if (__DEV__) {
+      console.error('Error saving game stats:', error);
+    }
   }
 };
 
@@ -95,7 +99,9 @@ export const getSettings = async (): Promise<GameSettings> => {
     const settingsString = await AsyncStorage.getItem(STORAGE_KEYS.SETTINGS);
     return settingsString ? { ...DEFAULT_SETTINGS, ...JSON.parse(settingsString) } : DEFAULT_SETTINGS;
   } catch (error) {
-    console.error('Error getting settings:', error);
+    if (__DEV__) {
+      console.error('Error getting settings:', error);
+    }
     return DEFAULT_SETTINGS;
   }
 };
@@ -106,7 +112,9 @@ export const saveSettings = async (settings: Partial<GameSettings>): Promise<voi
     const newSettings = { ...currentSettings, ...settings };
     await AsyncStorage.setItem(STORAGE_KEYS.SETTINGS, JSON.stringify(newSettings));
   } catch (error) {
-    console.error('Error saving settings:', error);
+    if (__DEV__) {
+      console.error('Error saving settings:', error);
+    }
   }
 };
 
@@ -122,7 +130,9 @@ export const getAchievements = async (): Promise<Achievement[]> => {
       return DEFAULT_ACHIEVEMENTS;
     }
   } catch (error) {
-    console.error('Error getting achievements:', error);
+    if (__DEV__) {
+      console.error('Error getting achievements:', error);
+    }
     return DEFAULT_ACHIEVEMENTS;
   }
 };
@@ -131,7 +141,9 @@ export const saveAchievements = async (achievements: Achievement[]): Promise<voi
   try {
     await AsyncStorage.setItem(STORAGE_KEYS.ACHIEVEMENTS, JSON.stringify(achievements));
   } catch (error) {
-    console.error('Error saving achievements:', error);
+    if (__DEV__) {
+      console.error('Error saving achievements:', error);
+    }
   }
 };
 
@@ -155,7 +167,9 @@ export const isDailyPuzzleCompleted = async (date: string): Promise<boolean> => 
     const completed = await AsyncStorage.getItem(`${STORAGE_KEYS.DAILY_PUZZLE_COMPLETED}_${date}`);
     return completed === 'true';
   } catch (error) {
-    console.error('Error checking daily puzzle completion:', error);
+    if (__DEV__) {
+      console.error('Error checking daily puzzle completion:', error);
+    }
     return false;
   }
 };
@@ -164,7 +178,9 @@ export const markDailyPuzzleCompleted = async (date: string): Promise<void> => {
   try {
     await AsyncStorage.setItem(`${STORAGE_KEYS.DAILY_PUZZLE_COMPLETED}_${date}`, 'true');
   } catch (error) {
-    console.error('Error marking daily puzzle completed:', error);
+    if (__DEV__) {
+      console.error('Error marking daily puzzle completed:', error);
+    }
   }
 };
 
@@ -174,7 +190,9 @@ export const getLastPlayed = async (): Promise<number> => {
     const lastPlayed = await AsyncStorage.getItem(STORAGE_KEYS.LAST_PLAYED);
     return lastPlayed ? parseInt(lastPlayed, 10) : 0;
   } catch (error) {
-    console.error('Error getting last played time:', error);
+    if (__DEV__) {
+      console.error('Error getting last played time:', error);
+    }
     return 0;
   }
 };
@@ -183,7 +201,9 @@ export const updateLastPlayed = async (): Promise<void> => {
   try {
     await AsyncStorage.setItem(STORAGE_KEYS.LAST_PLAYED, Date.now().toString());
   } catch (error) {
-    console.error('Error updating last played time:', error);
+    if (__DEV__) {
+      console.error('Error updating last played time:', error);
+    }
   }
 };
 
@@ -192,6 +212,8 @@ export const clearAllData = async (): Promise<void> => {
   try {
     await AsyncStorage.clear();
   } catch (error) {
-    console.error('Error clearing all data:', error);
+    if (__DEV__) {
+      console.error('Error clearing all data:', error);
+    }
   }
 };

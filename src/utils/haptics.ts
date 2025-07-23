@@ -19,7 +19,9 @@ export class GameHaptics {
     try {
       await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     } catch (error) {
-      console.warn('Haptic feedback failed:', error);
+      if (__DEV__) {
+        console.warn('Haptic feedback failed:', error);
+      }
     }
   }
 
@@ -32,7 +34,9 @@ export class GameHaptics {
     try {
       await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     } catch (error) {
-      console.warn('Haptic feedback failed:', error);
+      if (__DEV__) {
+        console.warn('Haptic feedback failed:', error);
+      }
     }
   }
 
@@ -45,7 +49,9 @@ export class GameHaptics {
     try {
       await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     } catch (error) {
-      console.warn('Haptic feedback failed:', error);
+      if (__DEV__) {
+        console.warn('Haptic feedback failed:', error);
+      }
     }
   }
 
@@ -58,7 +64,9 @@ export class GameHaptics {
     try {
       await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
     } catch (error) {
-      console.warn('Haptic feedback failed:', error);
+      if (__DEV__) {
+        console.warn('Haptic feedback failed:', error);
+      }
     }
   }
 
@@ -71,7 +79,9 @@ export class GameHaptics {
     try {
       await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
     } catch (error) {
-      console.warn('Haptic feedback failed:', error);
+      if (__DEV__) {
+        console.warn('Haptic feedback failed:', error);
+      }
     }
   }
 
@@ -84,7 +94,9 @@ export class GameHaptics {
     try {
       await Haptics.selectionAsync();
     } catch (error) {
-      console.warn('Haptic feedback failed:', error);
+      if (__DEV__) {
+        console.warn('Haptic feedback failed:', error);
+      }
     }
   }
 
@@ -111,7 +123,9 @@ export class GameHaptics {
         }
       }, 400);
     } catch (error) {
-      console.warn('Haptic victory sequence failed:', error);
+      if (__DEV__) {
+        console.warn('Haptic victory sequence failed:', error);
+      }
     }
   }
 
@@ -124,7 +138,9 @@ export class GameHaptics {
     try {
       await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     } catch (error) {
-      console.warn('Haptic feedback failed:', error);
+      if (__DEV__) {
+        console.warn('Haptic feedback failed:', error);
+      }
     }
   }
 
@@ -144,7 +160,9 @@ export class GameHaptics {
         }
       }, 150);
     } catch (error) {
-      console.warn('Haptic achievement feedback failed:', error);
+      if (__DEV__) {
+        console.warn('Haptic achievement feedback failed:', error);
+      }
     }
   }
 }

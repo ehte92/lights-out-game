@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import Animated, {
   useSharedValue,
@@ -13,7 +13,7 @@ interface GameStatsProps {
   isPlaying: boolean;
 }
 
-export const GameStats: React.FC<GameStatsProps> = ({
+export const GameStats: React.FC<GameStatsProps> = React.memo(({
   gameState,
   isPlaying,
 }) => {
@@ -48,19 +48,27 @@ export const GameStats: React.FC<GameStatsProps> = ({
     transform: [{ scale: moveScale.value }],
   }));
 
-  const formatTime = (seconds: number): string => {
+  const formatTime = useCallback((seconds: number): string => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
-  };
+  }, []);
 
   if (!gameState) {
     return null;
   }
 
-  const displayTime = gameState.isComplete && gameState.endTime
-    ? Math.floor((gameState.endTime - gameState.startTime) / 1000)
-    : elapsedTime;
+  const displayTime = useMemo(() => {
+    if (!gameState) return 0;
+    return gameState.isComplete && gameState.endTime
+      ? Math.floor((gameState.endTime - gameState.startTime) / 1000)
+      : elapsedTime;
+  }, [gameState, elapsedTime]);
+
+  const formattedDifficulty = useMemo(() => {
+    if (!gameState) return '';
+    return gameState.difficulty.charAt(0).toUpperCase() + gameState.difficulty.slice(1);
+  }, [gameState?.difficulty]);
 
   return (
     <View style={styles.container}>
@@ -83,12 +91,14 @@ export const GameStats: React.FC<GameStatsProps> = ({
       <View style={styles.statItem}>
         <Text style={styles.statLabel}>Difficulty</Text>
         <Text style={[styles.statValue, styles.difficultyText]}>
-          {gameState.difficulty.charAt(0).toUpperCase() + gameState.difficulty.slice(1)}
+          {formattedDifficulty}
         </Text>
       </View>
     </View>
   );
-};
+});
+
+GameStats.displayName = 'GameStats';
 
 const styles = StyleSheet.create({
   container: {

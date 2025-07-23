@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useCallback } from 'react';
 import { Pressable, StyleSheet } from 'react-native';
 import Animated, {
   useSharedValue,
@@ -21,7 +21,7 @@ interface GameCellProps {
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
-export const GameCell: React.FC<GameCellProps> = ({
+export const GameCell: React.FC<GameCellProps> = React.memo(({
   isOn,
   row,
   col,
@@ -33,7 +33,7 @@ export const GameCell: React.FC<GameCellProps> = ({
   const rotation = useSharedValue(0);
   const opacity = useSharedValue(1);
 
-  const handlePress = () => {
+  const handlePress = useCallback(() => {
     if (disabled) return;
 
     // Trigger press animation
@@ -49,7 +49,7 @@ export const GameCell: React.FC<GameCellProps> = ({
 
     // Trigger the callback
     runOnJS(onPress)(row, col);
-  };
+  }, [disabled, scale, rotation, onPress, row, col]);
 
   const animatedStyle = useAnimatedStyle(() => {
     const backgroundColor = interpolateColor(
@@ -105,7 +105,9 @@ export const GameCell: React.FC<GameCellProps> = ({
       </LinearGradient>
     </AnimatedPressable>
   );
-};
+});
+
+GameCell.displayName = 'GameCell';
 
 const styles = StyleSheet.create({
   cell: {
