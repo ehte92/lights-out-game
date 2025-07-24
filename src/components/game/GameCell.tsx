@@ -9,6 +9,7 @@ import Animated, {
   runOnJS,
 } from 'react-native-reanimated';
 import { LinearGradient } from 'expo-linear-gradient';
+import { useGameTheme } from '../../contexts/ThemeContext';
 
 interface GameCellProps {
   isOn: boolean;
@@ -29,6 +30,7 @@ export const GameCell: React.FC<GameCellProps> = React.memo(({
   onPress,
   disabled = false,
 }) => {
+  const { colors, animations, effects } = useGameTheme();
   const scale = useSharedValue(1);
   const rotation = useSharedValue(0);
   const opacity = useSharedValue(1);
@@ -36,26 +38,32 @@ export const GameCell: React.FC<GameCellProps> = React.memo(({
   const handlePress = useCallback(() => {
     if (disabled) return;
 
+    // Use theme-based animation settings
+    const pressScale = animations.cellHoverScale * 0.9; // Slightly smaller for press
+    const duration = animations.cellToggleDuration / 2; // Half duration for press
+    
     // Trigger press animation
     scale.value = withSequence(
-      withSpring(0.9, { duration: 100 }),
-      withSpring(1, { duration: 150 })
+      withSpring(pressScale, { duration }),
+      withSpring(1, { duration: duration * 1.5 })
     );
 
-    rotation.value = withSequence(
-      withSpring(5, { duration: 100 }),
-      withSpring(0, { duration: 150 })
-    );
+    if (animations.pressEffect) {
+      rotation.value = withSequence(
+        withSpring(3, { duration }),
+        withSpring(0, { duration: duration * 1.5 })
+      );
+    }
 
     // Trigger the callback
     runOnJS(onPress)(row, col);
-  }, [disabled, scale, rotation, onPress, row, col]);
+  }, [disabled, scale, rotation, onPress, row, col, animations]);
 
   const animatedStyle = useAnimatedStyle(() => {
     const backgroundColor = interpolateColor(
       opacity.value,
       [0, 1],
-      isOn ? ['#1a1a1a', '#fbbf24'] : ['#fbbf24', '#1a1a1a']
+      isOn ? [colors.cellOff, colors.cellOn] : [colors.cellOn, colors.cellOff]
     );
 
     return {
@@ -67,9 +75,10 @@ export const GameCell: React.FC<GameCellProps> = React.memo(({
     };
   });
 
+  // Create gradient colors based on theme
   const gradientColors = isOn 
-    ? ['#fbbf24', '#f59e0b', '#d97706'] // Bright yellow/orange when on
-    : ['#374151', '#4b5563', '#6b7280']; // Dark gray when off
+    ? [colors.cellOn, colors.cellOn + 'CC', colors.cellOn + '99'] // On state with transparency
+    : [colors.cellOff, colors.cellOff + 'CC', colors.cellOff + '99']; // Off state with transparency
 
   return (
     <AnimatedPressable
@@ -94,12 +103,13 @@ export const GameCell: React.FC<GameCellProps> = React.memo(({
         <Animated.View style={[
           styles.innerCell,
           {
-            backgroundColor: isOn ? '#fbbf24' : '#374151',
-            shadowColor: isOn ? '#fbbf24' : '#000',
-            shadowOpacity: isOn ? 0.8 : 0.3,
+            backgroundColor: isOn ? colors.cellOn : colors.cellOff,
+            borderColor: colors.cellBorder,
+            shadowColor: colors.cellShadow,
+            shadowOpacity: isOn ? (effects?.glowEffect ? 0.8 : 0.4) : 0.2,
             shadowOffset: { width: 0, height: isOn ? 4 : 2 },
-            shadowRadius: isOn ? 8 : 4,
-            elevation: isOn ? 8 : 4,
+            shadowRadius: isOn ? (effects?.glowEffect ? 12 : 6) : 3,
+            elevation: isOn ? 8 : 3,
           }
         ]} />
       </LinearGradient>
@@ -124,6 +134,5 @@ const styles = StyleSheet.create({
     flex: 1,
     borderRadius: 10,
     borderWidth: 2,
-    borderColor: 'rgba(255, 255, 255, 0.1)',
   },
 });

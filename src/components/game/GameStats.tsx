@@ -1,12 +1,13 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, StyleSheet } from 'react-native';
+import { Surface, Text, Divider } from 'react-native-paper';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
   withSpring,
-  interpolate,
 } from 'react-native-reanimated';
 import { GameState } from '../../types/game';
+import { useGameTheme } from '../../contexts/ThemeContext';
 
 interface GameStatsProps {
   gameState: GameState | null;
@@ -17,6 +18,7 @@ export const GameStats: React.FC<GameStatsProps> = React.memo(({
   gameState,
   isPlaying,
 }) => {
+  const { colors, paperTheme } = useGameTheme();
   const [elapsedTime, setElapsedTime] = useState(0);
   const moveScale = useSharedValue(1);
 
@@ -42,7 +44,7 @@ export const GameStats: React.FC<GameStatsProps> = React.memo(({
         moveScale.value = withSpring(1, { duration: 100 });
       });
     }
-  }, [gameState?.moves]);
+  }, [gameState?.moves, moveScale]);
 
   const moveAnimatedStyle = useAnimatedStyle(() => ({
     transform: [{ scale: moveScale.value }],
@@ -54,10 +56,6 @@ export const GameStats: React.FC<GameStatsProps> = React.memo(({
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   }, []);
 
-  if (!gameState) {
-    return null;
-  }
-
   const displayTime = useMemo(() => {
     if (!gameState) return 0;
     return gameState.isComplete && gameState.endTime
@@ -68,33 +66,47 @@ export const GameStats: React.FC<GameStatsProps> = React.memo(({
   const formattedDifficulty = useMemo(() => {
     if (!gameState) return '';
     return gameState.difficulty.charAt(0).toUpperCase() + gameState.difficulty.slice(1);
-  }, [gameState?.difficulty]);
+  }, [gameState]);
+
+  if (!gameState) {
+    return null;
+  }
 
   return (
-    <View style={styles.container}>
+    <Surface style={[styles.container, { backgroundColor: colors.panelBackground }]} elevation={2}>
       <View style={styles.statItem}>
-        <Text style={styles.statLabel}>Moves</Text>
+        <Text variant="labelSmall" style={[styles.statLabel, { color: paperTheme.colors.onSurfaceVariant }]}>
+          Moves
+        </Text>
         <Animated.View style={moveAnimatedStyle}>
-          <Text style={styles.statValue}>{gameState.moves}</Text>
+          <Text variant="titleLarge" style={[styles.statValue, { color: paperTheme.colors.onSurface }]}>
+            {gameState.moves}
+          </Text>
         </Animated.View>
       </View>
 
-      <View style={styles.separator} />
+      <Divider style={styles.separator} />
 
       <View style={styles.statItem}>
-        <Text style={styles.statLabel}>Time</Text>
-        <Text style={styles.statValue}>{formatTime(displayTime)}</Text>
+        <Text variant="labelSmall" style={[styles.statLabel, { color: paperTheme.colors.onSurfaceVariant }]}>
+          Time
+        </Text>
+        <Text variant="titleLarge" style={[styles.statValue, { color: paperTheme.colors.onSurface }]}>
+          {formatTime(displayTime)}
+        </Text>
       </View>
 
-      <View style={styles.separator} />
+      <Divider style={styles.separator} />
 
       <View style={styles.statItem}>
-        <Text style={styles.statLabel}>Difficulty</Text>
-        <Text style={[styles.statValue, styles.difficultyText]}>
+        <Text variant="labelSmall" style={[styles.statLabel, { color: paperTheme.colors.onSurfaceVariant }]}>
+          Difficulty
+        </Text>
+        <Text variant="titleMedium" style={[styles.statValue, styles.difficultyText, { color: colors.accent }]}>
           {formattedDifficulty}
         </Text>
       </View>
-    </View>
+    </Surface>
   );
 });
 
@@ -105,11 +117,10 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-around',
-    backgroundColor: 'rgba(0, 0, 0, 0.8)',
     borderRadius: 16,
-    paddingVertical: 12,
+    paddingVertical: 16,
     paddingHorizontal: 20,
-    marginHorizontal: 20,
+    marginHorizontal: 16,
     marginVertical: 10,
   },
   statItem: {
@@ -117,26 +128,19 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   statLabel: {
-    fontSize: 12,
-    color: '#9ca3af',
     marginBottom: 4,
     fontWeight: '600',
     textTransform: 'uppercase',
     letterSpacing: 0.5,
   },
   statValue: {
-    fontSize: 18,
-    color: '#ffffff',
     fontWeight: 'bold',
   },
   difficultyText: {
-    fontSize: 14,
-    color: '#fbbf24',
+    // Additional styles for difficulty text
   },
   separator: {
-    width: 1,
-    height: 30,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
-    marginHorizontal: 10,
+    height: 32,
+    marginHorizontal: 12,
   },
 });

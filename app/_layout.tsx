@@ -1,13 +1,34 @@
 import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
 import { useFonts } from 'expo-font';
 import { Stack } from 'expo-router';
-import { StatusBar } from 'expo-status-bar';
 import 'react-native-reanimated';
+import { PaperProvider } from 'react-native-paper';
 
-import { useColorScheme } from '@/hooks/useColorScheme';
+import { useCurrentTheme } from '@/src/stores/themeStore';
+import { GameThemeProvider } from '@/src/contexts/ThemeContext';
+
+// Root layout component that needs to bootstrap theme system
+function RootLayoutContent() {
+  const currentTheme = useCurrentTheme();
+  
+  // Get the appropriate navigation theme based on Paper theme
+  const navigationTheme = currentTheme.paperTheme.dark ? DarkTheme : DefaultTheme;
+
+  return (
+    <PaperProvider theme={currentTheme.paperTheme}>
+      <ThemeProvider value={navigationTheme}>
+        <GameThemeProvider>
+          <Stack>
+            <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+            <Stack.Screen name="+not-found" />
+          </Stack>
+        </GameThemeProvider>
+      </ThemeProvider>
+    </PaperProvider>
+  );
+}
 
 export default function RootLayout() {
-  const colorScheme = useColorScheme();
   const [loaded] = useFonts({
     SpaceMono: require('../assets/fonts/SpaceMono-Regular.ttf'),
   });
@@ -17,13 +38,5 @@ export default function RootLayout() {
     return null;
   }
 
-  return (
-    <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-      <Stack>
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="+not-found" />
-      </Stack>
-      <StatusBar style="auto" />
-    </ThemeProvider>
-  );
+  return <RootLayoutContent />;
 }

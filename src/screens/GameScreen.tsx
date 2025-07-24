@@ -1,12 +1,18 @@
 import React, { useEffect, useCallback } from 'react';
 import {
   View,
-  Text,
   StyleSheet,
   SafeAreaView,
-  Pressable,
-  Alert,
 } from 'react-native';
+import {
+  Text,
+  Button,
+  Surface,
+  Portal,
+  Modal,
+  Card,
+  Divider,
+} from 'react-native-paper';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -18,10 +24,11 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useGameStore } from '../stores/gameStore';
 import { GameGrid } from '../components/game/GameGrid';
 import { GameStats } from '../components/game/GameStats';
-import { GameHaptics } from '../utils/haptics';
 import { DevPanel } from '../components/development/DevPanel';
+import { useGameTheme } from '../contexts/ThemeContext';
 
 export const GameScreen: React.FC = () => {
+  const { colors, paperTheme } = useGameTheme();
   const {
     currentGame,
     isPlaying,
@@ -40,7 +47,6 @@ export const GameScreen: React.FC = () => {
 
   const victoryScale = useSharedValue(0);
   const victoryOpacity = useSharedValue(0);
-  const buttonScale = useSharedValue(1);
 
   // Initialize data on mount
   useEffect(() => {
@@ -79,24 +85,16 @@ export const GameScreen: React.FC = () => {
       victoryScale.value = 0;
       victoryOpacity.value = 0;
     }
-  }, [showVictory]);
+  }, [showVictory, victoryScale, victoryOpacity]);
 
   const victoryAnimatedStyle = useAnimatedStyle(() => ({
     transform: [{ scale: victoryScale.value }],
     opacity: victoryOpacity.value,
   }));
 
-  const buttonAnimatedStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: buttonScale.value }],
-  }));
-
   const handleButtonPress = useCallback((action: () => void) => {
-    buttonScale.value = withSequence(
-      withSpring(0.95, { duration: 100 }),
-      withSpring(1, { duration: 100 })
-    );
     action();
-  }, [buttonScale]);
+  }, []);
 
   const handleNewGame = useCallback(() => {
     handleButtonPress(async () => {
@@ -115,57 +113,46 @@ export const GameScreen: React.FC = () => {
     });
   }, [handleButtonPress, isPaused, resumeGame, pauseGame]);
 
-  const handleReset = useCallback(() => {
-    Alert.alert(
-      'Reset Game',
-      'Are you sure you want to restart this puzzle?',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Reset',
-          style: 'destructive',
-          onPress: () => handleButtonPress(resetGame),
-        },
-      ]
-    );
-  }, [handleButtonPress, resetGame]);
+  const [showResetConfirm, setShowResetConfirm] = React.useState(false);
 
-  const renderButton = useCallback((title: string, onPress: () => void, style?: React.ComponentProps<typeof Animated.View>['style']) => (
-    <Pressable onPress={() => handleButtonPress(onPress)}>
-      <Animated.View style={[styles.button, style, buttonAnimatedStyle]}>
-        <LinearGradient
-          colors={['#4f46e5', '#3730a3']}
-          style={styles.buttonGradient}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-        >
-          <Text style={styles.buttonText}>{title}</Text>
-        </LinearGradient>
-      </Animated.View>
-    </Pressable>
-  ), [buttonAnimatedStyle, handleButtonPress]);
+  const handleReset = useCallback(() => {
+    setShowResetConfirm(true);
+  }, []);
+
+  const confirmReset = useCallback(() => {
+    setShowResetConfirm(false);
+    handleButtonPress(resetGame);
+  }, [handleButtonPress, resetGame]);
 
   if (!currentGame) {
     return (
-      <SafeAreaView style={styles.container}>
-        <View style={styles.loadingContainer}>
-          <Text style={styles.loadingText}>Loading...</Text>
-        </View>
-      </SafeAreaView>
+      <Surface style={[styles.container, { backgroundColor: colors.gameBackground }]}>
+        <SafeAreaView style={styles.safeArea}>
+          <View style={styles.loadingContainer}>
+            <Text variant="headlineMedium" style={{ color: paperTheme.colors.onSurface }}>
+              Loading...
+            </Text>
+          </View>
+        </SafeAreaView>
+      </Surface>
     );
   }
 
   return (
     <LinearGradient
-      colors={['#0f172a', '#1e293b', '#334155']}
+      colors={[colors.gameBackground, colors.panelBackground]}
       style={styles.container}
     >
       <SafeAreaView style={styles.safeArea}>
         {/* Header */}
-        <View style={styles.header}>
-          <Text style={styles.title}>Lights Out</Text>
-          <Text style={styles.subtitle}>Turn off all the lights</Text>
-        </View>
+        <Surface style={[styles.header, { backgroundColor: colors.panelBackground }]} elevation={1}>
+          <Text variant="displayMedium" style={{ color: paperTheme.colors.onSurface }}>
+            Lights Out
+          </Text>
+          <Text variant="bodyLarge" style={{ color: paperTheme.colors.onSurfaceVariant }}>
+            Turn off all the lights
+          </Text>
+        </Surface>
 
         {/* Game Stats */}
         <GameStats gameState={currentGame} isPlaying={isPlaying && !isPaused} />
@@ -180,54 +167,124 @@ export const GameScreen: React.FC = () => {
           
           {/* Pause Overlay */}
           {isPaused && (
-            <View style={styles.pauseOverlay}>
-              <Text style={styles.pauseText}>Game Paused</Text>
-            </View>
+            <Surface style={styles.pauseOverlay} elevation={5}>
+              <Text variant="headlineLarge" style={{ color: paperTheme.colors.onSurface }}>
+                Game Paused
+              </Text>
+            </Surface>
           )}
         </View>
 
         {/* Control Buttons */}
-        <View style={styles.controls}>
-          {renderButton(
-            isPaused ? 'Resume' : 'Pause',
-            handlePause,
-            { backgroundColor: isPaused ? '#059669' : '#dc2626' }
-          )}
-          {renderButton('Reset', handleReset)}
-          {renderButton('New Game', handleNewGame)}
-        </View>
+        <Surface style={[styles.controls, { backgroundColor: colors.panelBackground }]} elevation={2}>
+          <Button
+            mode="contained"
+            onPress={handlePause}
+            style={styles.controlButton}
+            buttonColor={isPaused ? paperTheme.colors.tertiary : paperTheme.colors.error}
+          >
+            {isPaused ? 'Resume' : 'Pause'}
+          </Button>
+          <Button
+            mode="outlined"
+            onPress={handleReset}
+            style={styles.controlButton}
+          >
+            Reset
+          </Button>
+          <Button
+            mode="contained"
+            onPress={handleNewGame}
+            style={styles.controlButton}
+            buttonColor={paperTheme.colors.primary}
+          >
+            New Game
+          </Button>
+        </Surface>
 
         {/* Victory Modal */}
-        {showVictory && (
-          <View style={styles.victoryOverlay}>
-            <Animated.View style={[styles.victoryModal, victoryAnimatedStyle]}>
-              <LinearGradient
-                colors={['#fbbf24', '#f59e0b', '#d97706']}
-                style={styles.victoryGradient}
-              >
-                <Text style={styles.victoryTitle}>🎉 Victory! 🎉</Text>
-                <Text style={styles.victorySubtitle}>
-                  Puzzle completed in {currentGame.moves} moves!
-                </Text>
-                
-                {currentGame.endTime && (
-                  <Text style={styles.victoryTime}>
-                    Time: {Math.floor((currentGame.endTime - currentGame.startTime) / 1000)}s
+        <Portal>
+          <Modal
+            visible={showVictory}
+            onDismiss={() => setShowVictory(false)}
+            contentContainerStyle={styles.modalContainer}
+          >
+            <Animated.View style={victoryAnimatedStyle}>
+              <Card style={[styles.victoryCard, { backgroundColor: colors.accent }]}>
+                <Card.Content style={styles.victoryContent}>
+                  <Text variant="headlineLarge" style={styles.victoryTitle}>
+                    🎉 Victory! 🎉
                   </Text>
-                )}
-
-                <View style={styles.victoryButtons}>
-                  {renderButton('New Game', handleNewGame, styles.victoryButton)}
-                  {renderButton(
-                    'Continue',
-                    () => setShowVictory(false),
-                    styles.victoryButton
+                  <Divider style={styles.victoryDivider} />
+                  <Text variant="bodyLarge" style={styles.victorySubtitle}>
+                    Puzzle completed in {currentGame.moves} moves!
+                  </Text>
+                  
+                  {currentGame.endTime && (
+                    <Text variant="bodyMedium" style={styles.victoryTime}>
+                      Time: {Math.floor((currentGame.endTime - currentGame.startTime) / 1000)}s
+                    </Text>
                   )}
-                </View>
-              </LinearGradient>
+
+                  <View style={styles.victoryButtons}>
+                    <Button
+                      mode="contained"
+                      onPress={handleNewGame}
+                      style={styles.victoryButton}
+                      buttonColor={paperTheme.colors.primary}
+                    >
+                      New Game
+                    </Button>
+                    <Button
+                      mode="outlined"
+                      onPress={() => setShowVictory(false)}
+                      style={styles.victoryButton}
+                    >
+                      Continue
+                    </Button>
+                  </View>
+                </Card.Content>
+              </Card>
             </Animated.View>
-          </View>
-        )}
+          </Modal>
+        </Portal>
+
+        {/* Reset Confirmation Modal */}
+        <Portal>
+          <Modal
+            visible={showResetConfirm}
+            onDismiss={() => setShowResetConfirm(false)}
+            contentContainerStyle={styles.modalContainer}
+          >
+            <Card>
+              <Card.Content>
+                <Text variant="headlineSmall" style={styles.confirmTitle}>
+                  Reset Game
+                </Text>
+                <Text variant="bodyMedium" style={styles.confirmMessage}>
+                  Are you sure you want to restart this puzzle?
+                </Text>
+                <View style={styles.confirmButtons}>
+                  <Button
+                    mode="outlined"
+                    onPress={() => setShowResetConfirm(false)}
+                    style={styles.confirmButton}
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    mode="contained"
+                    onPress={confirmReset}
+                    style={styles.confirmButton}
+                    buttonColor={paperTheme.colors.error}
+                  >
+                    Reset
+                  </Button>
+                </View>
+              </Card.Content>
+            </Card>
+          </Modal>
+        </Portal>
 
         {/* Development Panel */}
         <DevPanel />
@@ -246,19 +303,10 @@ const styles = StyleSheet.create({
   header: {
     alignItems: 'center',
     paddingVertical: 20,
-  },
-  title: {
-    fontSize: 32,
-    fontWeight: 'bold',
-    color: '#ffffff',
-    textShadowColor: 'rgba(0, 0, 0, 0.5)',
-    textShadowOffset: { width: 0, height: 2 },
-    textShadowRadius: 4,
-  },
-  subtitle: {
-    fontSize: 16,
-    color: '#9ca3af',
-    marginTop: 4,
+    paddingHorizontal: 20,
+    marginBottom: 10,
+    borderRadius: 16,
+    marginHorizontal: 16,
   },
   gameContainer: {
     flex: 1,
@@ -267,88 +315,92 @@ const styles = StyleSheet.create({
   },
   pauseOverlay: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+    backgroundColor: 'rgba(0, 0, 0, 0.9)',
     justifyContent: 'center',
     alignItems: 'center',
-  },
-  pauseText: {
-    fontSize: 24,
-    color: '#ffffff',
-    fontWeight: 'bold',
+    borderRadius: 16,
+    margin: 16,
   },
   controls: {
     flexDirection: 'row',
     justifyContent: 'space-around',
     paddingHorizontal: 20,
-    paddingBottom: 20,
-    gap: 10,
+    paddingVertical: 16,
+    gap: 12,
+    marginHorizontal: 16,
+    marginBottom: 16,
+    borderRadius: 16,
   },
-  button: {
+  controlButton: {
     flex: 1,
-    borderRadius: 12,
-    overflow: 'hidden',
-  },
-  buttonGradient: {
-    paddingVertical: 12,
-    paddingHorizontal: 20,
-    alignItems: 'center',
-  },
-  buttonText: {
-    color: '#ffffff',
-    fontSize: 16,
-    fontWeight: '600',
   },
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
   },
-  loadingText: {
-    fontSize: 18,
-    color: '#ffffff',
-  },
-  victoryOverlay: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0, 0, 0, 0.8)',
-    justifyContent: 'center',
-    alignItems: 'center',
+  
+  // Modal styles
+  modalContainer: {
     padding: 20,
+    justifyContent: 'center',
   },
-  victoryModal: {
+  
+  // Victory modal styles
+  victoryCard: {
     borderRadius: 20,
     overflow: 'hidden',
-    width: '100%',
-    maxWidth: 300,
   },
-  victoryGradient: {
-    padding: 30,
+  victoryContent: {
+    padding: 24,
     alignItems: 'center',
   },
   victoryTitle: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    color: '#ffffff',
     textAlign: 'center',
-    marginBottom: 10,
+    marginBottom: 12,
+    color: '#ffffff',
+    fontWeight: 'bold',
+  },
+  victoryDivider: {
+    backgroundColor: 'rgba(255, 255, 255, 0.3)',
+    height: 1,
+    width: '100%',
+    marginBottom: 16,
   },
   victorySubtitle: {
-    fontSize: 18,
-    color: '#ffffff',
     textAlign: 'center',
     marginBottom: 8,
+    color: '#ffffff',
   },
   victoryTime: {
-    fontSize: 16,
-    color: 'rgba(255, 255, 255, 0.9)',
     textAlign: 'center',
-    marginBottom: 20,
+    marginBottom: 24,
+    color: 'rgba(255, 255, 255, 0.9)',
   },
   victoryButtons: {
     flexDirection: 'row',
-    gap: 10,
+    gap: 12,
     width: '100%',
   },
   victoryButton: {
+    flex: 1,
+  },
+  
+  // Confirmation modal styles
+  confirmTitle: {
+    textAlign: 'center',
+    marginBottom: 16,
+  },
+  confirmMessage: {
+    textAlign: 'center',
+    marginBottom: 24,
+  },
+  confirmButtons: {
+    flexDirection: 'row',
+    gap: 12,
+    justifyContent: 'space-between',
+  },
+  confirmButton: {
     flex: 1,
   },
 });
