@@ -1,33 +1,5 @@
-import { MMKV } from 'react-native-mmkv';
 import { GameStats, GameSettings, Achievement } from '../types/game';
-
-// Generate a secure encryption key
-const generateEncryptionKey = (): string => {
-  // Use a combination of timestamp and random values for uniqueness
-  const timestamp = Date.now().toString();
-  const random = Math.random().toString(36).substring(2);
-  const packageId = 'lights-out-puzzle-game'; // From app.json slug
-  return `${packageId}-${timestamp}-${random}`;
-};
-
-// Get or create encryption key
-const getEncryptionKey = (): string => {
-  const keyStorage = new MMKV({ id: 'encryption-key-store' });
-  let key = keyStorage.getString('encryption_key');
-  
-  if (!key) {
-    key = generateEncryptionKey();
-    keyStorage.set('encryption_key', key);
-  }
-  
-  return key;
-};
-
-// Initialize MMKV storage instance with secure encryption key
-export const storage = new MMKV({
-  id: 'lights-out-game',
-  encryptionKey: getEncryptionKey(),
-});
+import { storage } from './storageAdapter';
 
 // Storage keys
 const STORAGE_KEYS = {
@@ -65,9 +37,9 @@ const DEFAULT_SETTINGS: GameSettings = {
 };
 
 // Game Stats functions
-export const getGameStats = (): GameStats => {
+export const getGameStats = async (): Promise<GameStats> => {
   try {
-    const statsString = storage.getString(STORAGE_KEYS.GAME_STATS);
+    const statsString = await storage.getString(STORAGE_KEYS.GAME_STATS);
     return statsString ? JSON.parse(statsString) : DEFAULT_STATS;
   } catch (error) {
     if (__DEV__) {
@@ -77,9 +49,9 @@ export const getGameStats = (): GameStats => {
   }
 };
 
-export const saveGameStats = (stats: GameStats): void => {
+export const saveGameStats = async (stats: GameStats): Promise<void> => {
   try {
-    storage.set(STORAGE_KEYS.GAME_STATS, JSON.stringify(stats));
+    await storage.set(STORAGE_KEYS.GAME_STATS, JSON.stringify(stats));
   } catch (error) {
     if (__DEV__) {
       console.error('Error saving game stats:', error);
@@ -87,13 +59,13 @@ export const saveGameStats = (stats: GameStats): void => {
   }
 };
 
-export const updateGameStats = (
+export const updateGameStats = async (
   isWin: boolean,
   moves: number,
   timeInSeconds: number,
   difficulty: GameStats['bestTimes'][keyof GameStats['bestTimes']] extends number ? keyof GameStats['bestTimes'] : never
-): void => {
-  const stats = getGameStats();
+): Promise<void> => {
+  const stats = await getGameStats();
   
   stats.totalGames += 1;
   
@@ -114,13 +86,13 @@ export const updateGameStats = (
     stats.currentStreak = 0;
   }
   
-  saveGameStats(stats);
+  await saveGameStats(stats);
 };
 
 // Settings functions
-export const getSettings = (): GameSettings => {
+export const getSettings = async (): Promise<GameSettings> => {
   try {
-    const settingsString = storage.getString(STORAGE_KEYS.SETTINGS);
+    const settingsString = await storage.getString(STORAGE_KEYS.SETTINGS);
     return settingsString ? { ...DEFAULT_SETTINGS, ...JSON.parse(settingsString) } : DEFAULT_SETTINGS;
   } catch (error) {
     if (__DEV__) {
@@ -130,11 +102,11 @@ export const getSettings = (): GameSettings => {
   }
 };
 
-export const saveSettings = (settings: Partial<GameSettings>): void => {
+export const saveSettings = async (settings: Partial<GameSettings>): Promise<void> => {
   try {
-    const currentSettings = getSettings();
+    const currentSettings = await getSettings();
     const newSettings = { ...currentSettings, ...settings };
-    storage.set(STORAGE_KEYS.SETTINGS, JSON.stringify(newSettings));
+    await storage.set(STORAGE_KEYS.SETTINGS, JSON.stringify(newSettings));
   } catch (error) {
     if (__DEV__) {
       console.error('Error saving settings:', error);
@@ -143,9 +115,9 @@ export const saveSettings = (settings: Partial<GameSettings>): void => {
 };
 
 // Achievements functions
-export const getAchievements = (): Achievement[] => {
+export const getAchievements = async (): Promise<Achievement[]> => {
   try {
-    const achievementsString = storage.getString(STORAGE_KEYS.ACHIEVEMENTS);
+    const achievementsString = await storage.getString(STORAGE_KEYS.ACHIEVEMENTS);
     return achievementsString ? JSON.parse(achievementsString) : [];
   } catch (error) {
     if (__DEV__) {
@@ -155,9 +127,9 @@ export const getAchievements = (): Achievement[] => {
   }
 };
 
-export const saveAchievements = (achievements: Achievement[]): void => {
+export const saveAchievements = async (achievements: Achievement[]): Promise<void> => {
   try {
-    storage.set(STORAGE_KEYS.ACHIEVEMENTS, JSON.stringify(achievements));
+    await storage.set(STORAGE_KEYS.ACHIEVEMENTS, JSON.stringify(achievements));
   } catch (error) {
     if (__DEV__) {
       console.error('Error saving achievements:', error);
@@ -165,14 +137,14 @@ export const saveAchievements = (achievements: Achievement[]): void => {
   }
 };
 
-export const unlockAchievement = (achievementId: string): boolean => {
-  const achievements = getAchievements();
+export const unlockAchievement = async (achievementId: string): Promise<boolean> => {
+  const achievements = await getAchievements();
   const achievement = achievements.find(a => a.id === achievementId);
   
   if (achievement && !achievement.unlocked) {
     achievement.unlocked = true;
     achievement.unlockedAt = Date.now();
-    saveAchievements(achievements);
+    await saveAchievements(achievements);
     return true; // Achievement was just unlocked
   }
   
@@ -180,9 +152,9 @@ export const unlockAchievement = (achievementId: string): boolean => {
 };
 
 // Daily puzzle functions
-export const isDailyPuzzleCompleted = (date: string): boolean => {
+export const isDailyPuzzleCompleted = async (date: string): Promise<boolean> => {
   try {
-    return storage.getBoolean(`${STORAGE_KEYS.DAILY_PUZZLE_COMPLETED}_${date}`) || false;
+    return await storage.getBoolean(`${STORAGE_KEYS.DAILY_PUZZLE_COMPLETED}_${date}`) || false;
   } catch (error) {
     if (__DEV__) {
       console.error('Error checking daily puzzle completion:', error);
@@ -191,9 +163,9 @@ export const isDailyPuzzleCompleted = (date: string): boolean => {
   }
 };
 
-export const markDailyPuzzleCompleted = (date: string): void => {
+export const markDailyPuzzleCompleted = async (date: string): Promise<void> => {
   try {
-    storage.set(`${STORAGE_KEYS.DAILY_PUZZLE_COMPLETED}_${date}`, true);
+    await storage.set(`${STORAGE_KEYS.DAILY_PUZZLE_COMPLETED}_${date}`, true);
   } catch (error) {
     if (__DEV__) {
       console.error('Error marking daily puzzle completed:', error);
@@ -202,9 +174,9 @@ export const markDailyPuzzleCompleted = (date: string): void => {
 };
 
 // Last played functions
-export const getLastPlayed = (): number => {
+export const getLastPlayed = async (): Promise<number> => {
   try {
-    return storage.getNumber(STORAGE_KEYS.LAST_PLAYED) || 0;
+    return await storage.getNumber(STORAGE_KEYS.LAST_PLAYED) || 0;
   } catch (error) {
     if (__DEV__) {
       console.error('Error getting last played time:', error);
@@ -213,9 +185,9 @@ export const getLastPlayed = (): number => {
   }
 };
 
-export const updateLastPlayed = (): void => {
+export const updateLastPlayed = async (): Promise<void> => {
   try {
-    storage.set(STORAGE_KEYS.LAST_PLAYED, Date.now());
+    await storage.set(STORAGE_KEYS.LAST_PLAYED, Date.now());
   } catch (error) {
     if (__DEV__) {
       console.error('Error updating last played time:', error);
@@ -224,9 +196,11 @@ export const updateLastPlayed = (): void => {
 };
 
 // Clear all data (for debugging or reset)
-export const clearAllData = (): void => {
+export const clearAllData = async (): Promise<void> => {
   try {
-    storage.clearAll();
+    if (storage.clearAll) {
+      await storage.clearAll();
+    }
   } catch (error) {
     if (__DEV__) {
       console.error('Error clearing all data:', error);

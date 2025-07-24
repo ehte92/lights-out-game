@@ -19,6 +19,7 @@ import { useGameStore } from '../stores/gameStore';
 import { GameGrid } from '../components/game/GameGrid';
 import { GameStats } from '../components/game/GameStats';
 import { GameHaptics } from '../utils/haptics';
+import { DevPanel } from '../components/development/DevPanel';
 
 export const GameScreen: React.FC = () => {
   const {
@@ -227,6 +228,9 @@ export const GameScreen: React.FC = () => {
             </Animated.View>
           </View>
         )}
+
+        {/* Development Panel */}
+        <DevPanel />
       </SafeAreaView>
     </LinearGradient>
   );

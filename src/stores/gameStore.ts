@@ -16,7 +16,7 @@ import {
   saveAchievements,
   unlockAchievement,
   updateLastPlayed
-} from '../utils/simpleStorage';
+} from '../utils/storage';
 import { GameHaptics } from '../utils/haptics';
 
 interface GameStore {
