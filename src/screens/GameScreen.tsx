@@ -3,6 +3,7 @@ import {
   View,
   StyleSheet,
   SafeAreaView,
+  StatusBar,
 } from 'react-native';
 import {
   Text,
@@ -146,6 +147,11 @@ export const GameScreen: React.FC = () => {
       colors={[colors.gameBackground, colors.panelBackground]}
       style={styles.container}
     >
+      <StatusBar 
+        barStyle={paperTheme.dark ? 'light-content' : 'dark-content'} 
+        translucent={true}
+        backgroundColor="transparent"
+      />
       <SafeAreaView style={styles.safeArea}>
         {/* Header */}
         <Surface style={[styles.header, { backgroundColor: colors.panelBackground }]} elevation={1}>

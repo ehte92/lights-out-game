@@ -1,4 +1,4 @@
-import { StyleSheet, ScrollView } from 'react-native';
+import { StyleSheet, ScrollView, StatusBar } from 'react-native';
 import { Surface, Text, IconButton } from 'react-native-paper';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -13,6 +13,11 @@ export default function SettingsScreen() {
   
   return (
     <Surface style={[styles.container, { backgroundColor: colors.gameBackground }]}>
+      <StatusBar 
+        barStyle={paperTheme.dark ? 'light-content' : 'dark-content'} 
+        translucent={true}
+        backgroundColor="transparent"
+      />
       <SafeAreaView style={styles.safeArea}>
         <ScrollView contentContainerStyle={styles.scrollContent}>
           

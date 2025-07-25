@@ -1,23 +1,82 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import {
   View,
   StyleSheet,
   SafeAreaView,
   StatusBar,
+  Dimensions,
 } from 'react-native';
 import {
-  Text,
-  Button,
-  Surface,
   IconButton,
 } from 'react-native-paper';
-import { LinearGradient } from 'expo-linear-gradient';
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withSpring,
+  withDelay,
+  withSequence,
+  interpolate,
+} from 'react-native-reanimated';
 import { useRouter } from 'expo-router';
 import { useGameTheme } from '../contexts/ThemeContext';
+import { PremiumLogo } from '../components/ui/PremiumLogo';
+import { PremiumButton } from '../components/ui/PremiumButton';
+import { GradientText } from '../components/ui/GradientText';
+import { AtmosphericBackground } from '../components/ui/AtmosphericBackground';
+
+const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 
 export const MainMenuScreen: React.FC = () => {
   const { colors, paperTheme } = useGameTheme();
   const router = useRouter();
+
+  // Premium animation values with physics-based springs
+  const logoScale = useSharedValue(0.8);
+  const logoOpacity = useSharedValue(0);
+  const titleOpacity = useSharedValue(0);
+  const titleTranslateY = useSharedValue(40);
+  const buttonScale = useSharedValue(0.9);
+  const buttonOpacity = useSharedValue(0);
+  const settingsOpacity = useSharedValue(0);
+
+  useEffect(() => {
+    // Sophisticated entrance sequence
+    const springConfig = { damping: 20, stiffness: 300 };
+    
+    // Logo entrance with scale and fade
+    logoScale.value = withDelay(200, withSpring(1, springConfig));
+    logoOpacity.value = withDelay(200, withSpring(1, { damping: 15 }));
+    
+    // Title dramatic entrance
+    titleOpacity.value = withDelay(600, withSpring(1, { damping: 18 }));
+    titleTranslateY.value = withDelay(600, withSpring(0, springConfig));
+    
+    // Button hero entrance
+    buttonScale.value = withDelay(1000, withSpring(1, springConfig));
+    buttonOpacity.value = withDelay(1000, withSpring(1, { damping: 15 }));
+    
+    // Settings subtle appearance
+    settingsOpacity.value = withDelay(1200, withSpring(1, { damping: 12 }));
+  }, []);
+
+  const logoAnimatedStyle = useAnimatedStyle(() => ({
+    opacity: logoOpacity.value,
+    transform: [{ scale: logoScale.value }],
+  }));
+
+  const titleAnimatedStyle = useAnimatedStyle(() => ({
+    opacity: titleOpacity.value,
+    transform: [{ translateY: titleTranslateY.value }],
+  }));
+
+  const buttonAnimatedStyle = useAnimatedStyle(() => ({
+    opacity: buttonOpacity.value,
+    transform: [{ scale: buttonScale.value }],
+  }));
+
+  const settingsAnimatedStyle = useAnimatedStyle(() => ({
+    opacity: settingsOpacity.value,
+  }));
 
   const handlePlay = () => {
     router.push('/game');
@@ -28,107 +87,129 @@ export const MainMenuScreen: React.FC = () => {
   };
 
   return (
-    <LinearGradient
-      colors={[colors.gameBackground, colors.panelBackground]}
-      style={styles.container}
-    >
-      <StatusBar barStyle={paperTheme.dark ? 'light-content' : 'dark-content'} />
+    <AtmosphericBackground>
+      <StatusBar 
+        barStyle={paperTheme.dark ? 'light-content' : 'dark-content'} 
+        translucent={true}
+        backgroundColor="transparent"
+      />
       <SafeAreaView style={styles.safeArea}>
         
-        {/* Settings Button */}
-        <View style={styles.topBar}>
+        {/* Minimalist Settings Button */}
+        <Animated.View style={[styles.settingsContainer, settingsAnimatedStyle]}>
           <IconButton 
             icon="cog" 
             size={24}
             iconColor={paperTheme.colors.onSurface}
             onPress={handleSettings}
+            style={styles.settingsButton}
           />
+        </Animated.View>
+
+        {/* Hero Brand Section */}
+        <View style={styles.heroContainer}>
+          <Animated.View style={[styles.logoContainer, logoAnimatedStyle]}>
+            <PremiumLogo size={140} animated={true} />
+          </Animated.View>
+          
+          <Animated.View style={[styles.titleContainer, titleAnimatedStyle]}>
+            <GradientText style={styles.appTitle}>
+              Lights Out
+            </GradientText>
+            <GradientText 
+              style={styles.tagline}
+              colors={[
+                `${paperTheme.colors.onSurface}80`,
+                `${paperTheme.colors.onSurface}60`,
+              ]}
+            >
+              The Classic Puzzle Challenge
+            </GradientText>
+          </Animated.View>
         </View>
 
-        {/* Main Content */}
-        <View style={styles.content}>
-          <Surface style={[styles.titleContainer, { backgroundColor: colors.panelBackground }]} elevation={2}>
-            <Text variant="displayLarge" style={[styles.title, { color: paperTheme.colors.onSurface }]}>
-              Lights Out
-            </Text>
-            <Text variant="bodyLarge" style={[styles.subtitle, { color: paperTheme.colors.onSurfaceVariant }]}>
-              The Classic Puzzle Challenge
-            </Text>
-          </Surface>
-
-          <View style={styles.actionContainer}>
-            <Button
-              mode="contained"
+        {/* Hero Action */}
+        <View style={styles.actionContainer}>
+          <Animated.View style={buttonAnimatedStyle}>
+            <PremiumButton
+              title="PLAY"
               onPress={handlePlay}
+              size="large"
+              variant="primary"
               style={styles.playButton}
-              buttonColor={paperTheme.colors.primary}
-              contentStyle={styles.playButtonContent}
-            >
-              <Text variant="headlineSmall" style={styles.playButtonText}>
-                Play
-              </Text>
-            </Button>
-          </View>
+              textStyle={styles.playButtonText}
+            />
+          </Animated.View>
         </View>
 
       </SafeAreaView>
-    </LinearGradient>
+    </AtmosphericBackground>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
   safeArea: {
     flex: 1,
   },
-  topBar: {
-    flexDirection: 'row',
-    justifyContent: 'flex-end',
-    paddingHorizontal: 16,
-    paddingTop: 8,
+  settingsContainer: {
+    position: 'absolute',
+    top: 16,
+    right: 16,
+    zIndex: 10,
   },
-  content: {
+  settingsButton: {
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    borderRadius: 20,
+  },
+  heroContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
     paddingHorizontal: 32,
+    paddingBottom: 80,
+  },
+  logoContainer: {
+    marginBottom: 40,
   },
   titleContainer: {
     alignItems: 'center',
-    paddingVertical: 32,
-    paddingHorizontal: 24,
-    borderRadius: 20,
-    marginBottom: 64,
-    minWidth: '100%',
+    marginBottom: 60,
   },
-  title: {
+  appTitle: {
+    fontSize: 56,
+    fontWeight: '900',
     textAlign: 'center',
-    fontWeight: 'bold',
-    marginBottom: 8,
+    letterSpacing: -2,
+    marginBottom: 12,
+    lineHeight: 64,
   },
-  subtitle: {
+  tagline: {
+    fontSize: 18,
+    fontWeight: '600',
     textAlign: 'center',
+    letterSpacing: -0.5,
     opacity: 0.8,
   },
   actionContainer: {
-    width: '100%',
-    alignItems: 'center',
-  },
-  playButton: {
-    borderRadius: 16,
-    elevation: 4,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-  },
-  playButtonContent: {
-    paddingVertical: 12,
+    position: 'absolute',
+    bottom: 120,
+    left: 0,
+    right: 0,
     paddingHorizontal: 48,
   },
+  playButton: {
+    width: '100%',
+    height: 72,
+    borderRadius: 36,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 12 },
+    shadowOpacity: 0.4,
+    shadowRadius: 24,
+    elevation: 20,
+  },
   playButtonText: {
-    color: 'white',
-    fontWeight: 'bold',
+    fontSize: 24,
+    fontWeight: '900',
+    letterSpacing: 1,
   },
 });
