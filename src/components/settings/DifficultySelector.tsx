@@ -1,14 +1,8 @@
 import React from 'react';
 import { View, StyleSheet, Pressable, Platform } from 'react-native';
 import { Text } from 'react-native-paper';
-import Animated, {
-  useSharedValue,
-  useAnimatedStyle,
-} from 'react-native-reanimated';
 import { useAppTheme, useAppTypography, useAppBorders } from '../../contexts/AppThemeContext';
 import { Difficulty } from '../../types/game';
-
-const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
 interface DifficultySelectorProps {
   value: Difficulty;
@@ -48,7 +42,6 @@ export const DifficultySelector: React.FC<DifficultySelectorProps> = ({
   
   const renderDifficultyOption = (option: typeof DIFFICULTY_OPTIONS[0]) => {
     const isSelected = value === option.value;
-    const pressed = useSharedValue(false);
     
     const handlePress = () => {
       if (!disabled) {
@@ -56,27 +49,12 @@ export const DifficultySelector: React.FC<DifficultySelectorProps> = ({
       }
     };
     
-    const handlePressIn = () => {
-      pressed.value = true;
-    };
-    
-    const handlePressOut = () => {
-      pressed.value = false;
-    };
-    
-    const animatedStyle = useAnimatedStyle(() => ({
-      transform: [
-        { translateX: pressed.value ? 2 : 0 },
-        { translateY: pressed.value ? 2 : 0 },
-      ],
-    }));
-    
     const backgroundColor = isSelected ? colors.primary : colors.background;
     const textColor = isSelected ? colors.background : colors.onBackground;
     const borderColor = borders.color;
     
     return (
-      <AnimatedPressable
+      <Pressable
         key={option.value}
         style={[
           styles.difficultyOption,
@@ -89,18 +67,15 @@ export const DifficultySelector: React.FC<DifficultySelectorProps> = ({
               ios: {
                 shadowColor: '#000000',
                 shadowOffset: { width: 4, height: 4 },
-                shadowOpacity: isSelected ? 0 : 1, // No shadow when pressed/selected
+                shadowOpacity: isSelected ? 0 : 1, // No shadow when selected
                 shadowRadius: 0,
               },
               android: { elevation: isSelected ? 0 : 8 },
             }),
           },
-          animatedStyle,
           disabled && styles.disabled,
         ]}
         onPress={handlePress}
-        onPressIn={handlePressIn}
-        onPressOut={handlePressOut}
         disabled={disabled}
       >
         <Text
@@ -163,7 +138,7 @@ export const DifficultySelector: React.FC<DifficultySelectorProps> = ({
             );
           })}
         </View>
-      </AnimatedPressable>
+      </Pressable>
     );
   };
   

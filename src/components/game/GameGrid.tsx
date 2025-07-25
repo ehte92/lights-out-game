@@ -5,11 +5,10 @@ import Animated, {
   useAnimatedStyle,
   withSpring,
   withDelay,
-  runOnJS,
 } from 'react-native-reanimated';
 import { GameCell } from './GameCell';
 import { GameState } from '../../types/game';
-import { useAppTheme, useAppBorders } from '../../contexts/AppThemeContext';
+// Theme context not needed at grid level - all styling handled by GameCell
 
 interface GameGridProps {
   gameState: GameState;
@@ -18,49 +17,72 @@ interface GameGridProps {
 }
 
 const { width: screenWidth } = Dimensions.get('window');
-const GRID_MARGIN = 24; // Reduced margins for larger grid
-const MAX_GRID_WIDTH = Math.min(screenWidth - GRID_MARGIN, 500); // Increased max size
+
+// Grid-size-aware specifications for responsive design
+const getGridSpecs = (gridSize: number) => {
+  switch (gridSize) {
+    case 3:
+      return { minCellSize: 75, gap: 14, maxWidth: 0.85 }; // Generous for 3x3
+    case 4:
+      return { minCellSize: 65, gap: 12, maxWidth: 0.88 }; // Classic 4x4
+    case 5:
+      return { minCellSize: 52, gap: 10, maxWidth: 0.90 }; // Tighter for 5x5
+    case 6:
+      return { minCellSize: 44, gap: 8, maxWidth: 0.92 };  // Compact for 6x6
+    default:
+      return { minCellSize: 65, gap: 12, maxWidth: 0.88 };
+  }
+};
 
 export const GameGrid: React.FC<GameGridProps> = ({
   gameState,
   onCellPress,
   disabled = false,
 }) => {
-  const { colors } = useAppTheme();
-  const borders = useAppBorders();
   const scale = useSharedValue(1);
   
   const { cellSize, gridWidth, cellGap } = useMemo(() => {
     const size = gameState.gridSize;
-    const gap = 12; // Generous gap for floating cell aesthetic
+    const specs = getGridSpecs(size);
     
-    // Use most of the screen width for natural floating appearance
-    const targetWidth = Math.min(screenWidth * 0.9, 480); // Larger for floating design
+    // Use progressive screen width utilization
+    const targetWidth = screenWidth * specs.maxWidth;
     
     // Calculate total gap space needed
-    const totalGapSpace = (size - 1) * gap;
+    const totalGapSpace = (size - 1) * specs.gap;
     
-    // Available space for just the cells (no padding needed for floating design)
+    // Available space for just the cells
     const availableForCells = targetWidth - totalGapSpace;
     
-    // Calculate cell size
+    // Calculate optimal cell size
     const rawCellSize = availableForCells / size;
     const calculatedCellSize = Math.floor(rawCellSize);
     
-    // Ensure excellent cell size for floating design
-    const minCellSize = 70; // Larger cells for better floating aesthetic
-    const finalCellSize = Math.max(calculatedCellSize, minCellSize);
+    // Ensure minimum cell size for good touch targets (iOS: 44pt minimum)
+    const finalCellSize = Math.max(calculatedCellSize, specs.minCellSize);
     
     // Recalculate grid width based on final cell size
     const actualCellsWidth = finalCellSize * size;
     const finalGridWidth = actualCellsWidth + totalGapSpace;
     
+    // Debug logging for development
+    if (__DEV__) {
+      console.log(`📱 Grid sizing for ${size}×${size}:`, {
+        screenWidth,
+        targetWidth: Math.round(targetWidth),
+        finalGridWidth: Math.round(finalGridWidth),
+        cellSize: finalCellSize,
+        gap: specs.gap,
+        fitsOnScreen: finalGridWidth <= screenWidth
+      });
+    }
+    
     return {
       cellSize: finalCellSize,
       gridWidth: finalGridWidth,
-      cellGap: gap,
+      cellGap: specs.gap,
     };
-  }, [gameState.gridSize, screenWidth]);
+  }, [gameState.gridSize]);
 
   // Victory animation
   React.useEffect(() => {
@@ -72,7 +94,7 @@ export const GameGrid: React.FC<GameGridProps> = ({
         })
       );
     }
-  }, [gameState.isComplete]);
+  }, [gameState.isComplete, scale]);
 
   const animatedStyle = useAnimatedStyle(() => ({
     transform: [{ scale: scale.value }],

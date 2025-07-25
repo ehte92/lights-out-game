@@ -1,14 +1,7 @@
 import React from 'react';
 import { View, StyleSheet, Pressable, Platform } from 'react-native';
 import { Text } from 'react-native-paper';
-import Animated, {
-  useSharedValue,
-  useAnimatedStyle,
-  withSpring,
-} from 'react-native-reanimated';
 import { useAppTheme, useAppTypography, useAppBorders } from '../../contexts/AppThemeContext';
-
-const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
 interface GridSizeSelectorProps {
   value: number;
@@ -32,9 +25,25 @@ export const GridSizeSelector: React.FC<GridSizeSelectorProps> = ({
   const typography = useAppTypography();
   const borders = useAppBorders();
   
+  // Helper function to get preview specifications for each grid size
+  const getPreviewSpecs = (gridSize: number) => {
+    switch (gridSize) {
+      case 3:
+        return { cellSize: 8, gap: 2, containerSize: 30 };
+      case 4:
+        return { cellSize: 6, gap: 2, containerSize: 30 };
+      case 5:
+        return { cellSize: 5, gap: 1, containerSize: 29 };
+      case 6:
+        return { cellSize: 4, gap: 1, containerSize: 29 };
+      default:
+        return { cellSize: 6, gap: 2, containerSize: 30 };
+    }
+  };
+
   const renderGridOption = (option: typeof GRID_SIZES[0]) => {
     const isSelected = value === option.size;
-    const pressed = useSharedValue(false);
+    const specs = getPreviewSpecs(option.size);
     
     const handlePress = () => {
       if (!disabled) {
@@ -42,27 +51,12 @@ export const GridSizeSelector: React.FC<GridSizeSelectorProps> = ({
       }
     };
     
-    const handlePressIn = () => {
-      pressed.value = true;
-    };
-    
-    const handlePressOut = () => {
-      pressed.value = false;
-    };
-    
-    const animatedStyle = useAnimatedStyle(() => ({
-      transform: [
-        { translateX: pressed.value ? 2 : 0 },
-        { translateY: pressed.value ? 2 : 0 },
-      ],
-    }));
-    
     const backgroundColor = isSelected ? colors.secondary : colors.background;
     const textColor = isSelected ? colors.background : colors.onBackground;
     const borderColor = borders.color;
     
     return (
-      <AnimatedPressable
+      <Pressable
         key={option.size}
         style={[
           styles.gridOption,
@@ -75,18 +69,15 @@ export const GridSizeSelector: React.FC<GridSizeSelectorProps> = ({
               ios: {
                 shadowColor: '#000000',
                 shadowOffset: { width: 4, height: 4 },
-                shadowOpacity: isSelected ? 0 : 1, // No shadow when pressed/selected
+                shadowOpacity: isSelected ? 0 : 1, // No shadow when selected
                 shadowRadius: 0,
               },
               android: { elevation: isSelected ? 0 : 8 },
             }),
           },
-          animatedStyle,
           disabled && styles.disabled,
         ]}
         onPress={handlePress}
-        onPressIn={handlePressIn}
-        onPressOut={handlePressOut}
         disabled={disabled}
       >
         <Text
@@ -115,23 +106,40 @@ export const GridSizeSelector: React.FC<GridSizeSelectorProps> = ({
           {option.description}
         </Text>
         
-        {/* Mini grid preview */}
-        <View style={styles.previewGrid}>
-          {Array.from({ length: option.size * option.size }).map((_, index) => (
-            <View
-              key={index}
-              style={[
-                styles.previewCell,
-                {
-                  backgroundColor: isSelected ? colors.background : colors.onBackground,
-                  borderWidth: 1,
-                  borderColor: isSelected ? colors.onBackground : colors.background,
-                },
-              ]}
-            />
-          ))}
+        {/* Mini grid preview with proper positioning */}
+        <View style={[
+          styles.previewGrid,
+          {
+            width: specs.containerSize,
+            height: specs.containerSize,
+          }
+        ]}>
+          {Array.from({ length: option.size * option.size }).map((_, index) => {
+            const row = Math.floor(index / option.size);
+            const col = index % option.size;
+            const left = col * (specs.cellSize + specs.gap);
+            const top = row * (specs.cellSize + specs.gap);
+            
+            return (
+              <View
+                key={index}
+                style={[
+                  styles.previewCell,
+                  {
+                    width: specs.cellSize,
+                    height: specs.cellSize,
+                    left,
+                    top,
+                    backgroundColor: isSelected ? colors.background : colors.onBackground,
+                    borderWidth: 0.5,
+                    borderColor: isSelected ? colors.onBackground : colors.background,
+                  },
+                ]}
+              />
+            );
+          })}
         </View>
-      </AnimatedPressable>
+      </Pressable>
     );
   };
   
@@ -212,18 +220,12 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   previewGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    width: 32,
-    height: 32,
+    position: 'relative',
     marginTop: 12,
-    justifyContent: 'center',
-    alignItems: 'center',
+    alignSelf: 'center',
   },
   previewCell: {
-    width: 6,
-    height: 6,
-    margin: 0.5,
+    position: 'absolute',
     borderRadius: 0, // Sharp corners for neobrutalism
   },
   disabled: {
