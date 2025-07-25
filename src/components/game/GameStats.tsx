@@ -24,14 +24,15 @@ export const GameStats: React.FC<GameStatsProps> = React.memo(({
 
   // Timer effect
   useEffect(() => {
-    if (!gameState || !isPlaying || gameState.isComplete) {
+    if (!gameState || !isPlaying || gameState.isComplete || !gameState.lastResumeTime) {
       return;
     }
 
     const interval = setInterval(() => {
       const now = Date.now();
-      const elapsed = Math.floor((now - gameState.startTime) / 1000);
-      setElapsedTime(elapsed);
+      const sessionTime = (now - gameState.lastResumeTime!) / 1000;
+      const totalElapsed = Math.floor(gameState.elapsedTime + sessionTime);
+      setElapsedTime(totalElapsed);
     }, 1000);
 
     return () => clearInterval(interval);
@@ -58,8 +59,8 @@ export const GameStats: React.FC<GameStatsProps> = React.memo(({
 
   const displayTime = useMemo(() => {
     if (!gameState) return 0;
-    return gameState.isComplete && gameState.endTime
-      ? Math.floor((gameState.endTime - gameState.startTime) / 1000)
+    return gameState.isComplete
+      ? Math.floor(gameState.elapsedTime)
       : elapsedTime;
   }, [gameState, elapsedTime]);
 

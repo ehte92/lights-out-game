@@ -108,7 +108,8 @@ export const createInitialGameState = (
     moves: 0,
     isComplete: false,
     difficulty,
-    startTime: Date.now(),
+    elapsedTime: 0,
+    lastResumeTime: Date.now(), // Start timing immediately
     gridSize,
   };
 };

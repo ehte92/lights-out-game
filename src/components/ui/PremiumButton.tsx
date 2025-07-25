@@ -18,7 +18,7 @@ interface PremiumButtonProps {
   title: string;
   onPress: () => void;
   size?: 'large' | 'medium' | 'small';
-  variant?: 'primary' | 'secondary' | 'ghost';
+  variant?: 'primary' | 'secondary' | 'ghost' | 'continue';
   disabled?: boolean;
   style?: ViewStyle;
   textStyle?: TextStyle;
@@ -75,6 +75,12 @@ export const PremiumButton: React.FC<PremiumButtonProps> = ({
           colors.cellOn || paperTheme.colors.secondary,
           paperTheme.colors.tertiary,
         ];
+      case 'continue':
+        return [
+          '#f59e0b', // Warm amber
+          '#f97316', // Orange
+          '#ea580c', // Deep orange
+        ];
       case 'secondary':
         return [
           colors.panelBackground,
@@ -88,6 +94,7 @@ export const PremiumButton: React.FC<PremiumButtonProps> = ({
   const getTextColor = () => {
     switch (variant) {
       case 'primary':
+      case 'continue':
         return '#FFFFFF';
       case 'secondary':
         return paperTheme.colors.onSurface;
@@ -147,7 +154,7 @@ export const PremiumButton: React.FC<PremiumButtonProps> = ({
       disabled={disabled}
     >
       {/* Glow Effect Background */}
-      {variant === 'primary' && (
+      {(variant === 'primary' || variant === 'continue') && (
         <Animated.View
           style={[
             StyleSheet.absoluteFillObject,
@@ -157,8 +164,12 @@ export const PremiumButton: React.FC<PremiumButtonProps> = ({
         >
           <LinearGradient
             colors={[
-              `${colors.accent || paperTheme.colors.primary}40`,
-              `${colors.accent || paperTheme.colors.primary}20`,
+              variant === 'continue' 
+                ? '#f59e0b40'
+                : `${colors.accent || paperTheme.colors.primary}40`,
+              variant === 'continue' 
+                ? '#f59e0b20'
+                : `${colors.accent || paperTheme.colors.primary}20`,
               'transparent',
             ]}
             style={[StyleSheet.absoluteFillObject, { borderRadius: sizeStyles.borderRadius + 8 }]}
@@ -175,7 +186,7 @@ export const PremiumButton: React.FC<PremiumButtonProps> = ({
       />
       
       {/* Glass Effect Overlay */}
-      {variant === 'primary' && (
+      {(variant === 'primary' || variant === 'continue') && (
         <BlurView
           intensity={20}
           style={[StyleSheet.absoluteFillObject, { borderRadius: sizeStyles.borderRadius }]}

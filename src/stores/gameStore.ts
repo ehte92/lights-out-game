@@ -139,8 +139,11 @@ export const useGameStore = create<GameStore>((set, get) => ({
 
     // Update statistics if game is complete
     if (gameComplete) {
-      const timeInSeconds = (updatedGame.endTime! - updatedGame.startTime) / 1000;
-      await updateGameStats(true, newMoves, timeInSeconds, updatedGame.difficulty);
+      // Calculate final elapsed time
+      const finalElapsedTime = updatedGame.elapsedTime + 
+        (updatedGame.lastResumeTime ? (Date.now() - updatedGame.lastResumeTime) / 1000 : 0);
+      
+      await updateGameStats(true, newMoves, finalElapsedTime, updatedGame.difficulty);
       
       // Reload stats to reflect changes
       const newStats = await getGameStats();
@@ -152,12 +155,47 @@ export const useGameStore = create<GameStore>((set, get) => ({
   },
 
   pauseGame: () => {
-    set({ isPaused: true });
+    const { currentGame } = get();
+    if (!currentGame || !currentGame.lastResumeTime) {
+      set({ isPaused: true });
+      GameHaptics.buttonPress();
+      return;
+    }
+
+    // Calculate elapsed time and pause
+    const now = Date.now();
+    const sessionTime = (now - currentGame.lastResumeTime) / 1000;
+    const updatedGame = {
+      ...currentGame,
+      elapsedTime: currentGame.elapsedTime + sessionTime,
+      lastResumeTime: undefined, // Clear resume time when paused
+    };
+
+    set({ 
+      currentGame: updatedGame,
+      isPaused: true 
+    });
     GameHaptics.buttonPress();
   },
 
   resumeGame: () => {
-    set({ isPaused: false });
+    const { currentGame } = get();
+    if (!currentGame) {
+      set({ isPaused: false });
+      GameHaptics.buttonPress();
+      return;
+    }
+
+    // Resume timer
+    const updatedGame = {
+      ...currentGame,
+      lastResumeTime: Date.now(), // Set new resume time
+    };
+
+    set({ 
+      currentGame: updatedGame,
+      isPaused: false 
+    });
     GameHaptics.buttonPress();
   },
 
@@ -241,7 +279,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
         description: 'Complete a medium puzzle in under 30 seconds',
         condition: currentGame?.difficulty === 'medium' && 
                    currentGame?.endTime && 
-                   (currentGame.endTime - currentGame.startTime) / 1000 < 30,
+                   currentGame.elapsedTime < 30,
       },
     ];
 

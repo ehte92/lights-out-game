@@ -5,7 +5,8 @@ export type GameState = {
   moves: number;
   isComplete: boolean;
   difficulty: Difficulty;
-  startTime: number;
+  elapsedTime: number;
+  lastResumeTime?: number;
   endTime?: number;
   gridSize: number;
 };

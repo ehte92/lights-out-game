@@ -19,8 +19,9 @@ import Animated, {
 } from 'react-native-reanimated';
 import { useRouter } from 'expo-router';
 import { useGameTheme } from '../contexts/ThemeContext';
+import { useGameStore } from '../stores/gameStore';
 import { PremiumLogo } from '../components/ui/PremiumLogo';
-import { PremiumButton } from '../components/ui/PremiumButton';
+import { SmartPlayButton } from '../components/ui/SmartPlayButton';
 import { GradientText } from '../components/ui/GradientText';
 import { AtmosphericBackground } from '../components/ui/AtmosphericBackground';
 
@@ -28,6 +29,7 @@ const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 
 export const MainMenuScreen: React.FC = () => {
   const { colors, paperTheme } = useGameTheme();
+  const { currentGame, startNewGame } = useGameStore();
   const router = useRouter();
 
   // Premium animation values with physics-based springs
@@ -78,7 +80,12 @@ export const MainMenuScreen: React.FC = () => {
     opacity: settingsOpacity.value,
   }));
 
-  const handlePlay = () => {
+  const handleContinue = () => {
+    router.push('/game');
+  };
+
+  const handleNewGame = async () => {
+    await startNewGame();
     router.push('/game');
   };
 
@@ -128,16 +135,14 @@ export const MainMenuScreen: React.FC = () => {
           </Animated.View>
         </View>
 
-        {/* Hero Action */}
+        {/* Smart Play Button */}
         <View style={styles.actionContainer}>
           <Animated.View style={buttonAnimatedStyle}>
-            <PremiumButton
-              title="PLAY"
-              onPress={handlePlay}
-              size="large"
-              variant="primary"
-              style={styles.playButton}
-              textStyle={styles.playButtonText}
+            <SmartPlayButton
+              gameState={currentGame}
+              onContinue={handleContinue}
+              onNewGame={handleNewGame}
+              style={styles.smartButton}
             />
           </Animated.View>
         </View>
@@ -197,19 +202,7 @@ const styles = StyleSheet.create({
     right: 0,
     paddingHorizontal: 48,
   },
-  playButton: {
+  smartButton: {
     width: '100%',
-    height: 72,
-    borderRadius: 36,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 12 },
-    shadowOpacity: 0.4,
-    shadowRadius: 24,
-    elevation: 20,
-  },
-  playButtonText: {
-    fontSize: 24,
-    fontWeight: '900',
-    letterSpacing: 1,
   },
 });

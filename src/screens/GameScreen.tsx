@@ -5,6 +5,7 @@ import {
   SafeAreaView,
   StatusBar,
 } from 'react-native';
+import { useFocusEffect } from '@react-navigation/native';
 import {
   Text,
   Button,
@@ -48,6 +49,23 @@ export const GameScreen: React.FC = () => {
     loadSettings,
     loadAchievements,
   } = useGameStore();
+
+  // Navigation-based auto-pause
+  useFocusEffect(
+    useCallback(() => {
+      // Resume game when screen gains focus
+      if (currentGame && !currentGame.isComplete && isPaused) {
+        resumeGame();
+      }
+      
+      return () => {
+        // Pause game when screen loses focus
+        if (currentGame && !currentGame.isComplete && isPlaying && !isPaused) {
+          pauseGame();
+        }
+      };
+    }, [currentGame, isPlaying, isPaused, pauseGame, resumeGame])
+  );
 
   const victoryScale = useSharedValue(0);
   const victoryOpacity = useSharedValue(0);
@@ -240,11 +258,9 @@ export const GameScreen: React.FC = () => {
                     Puzzle completed in {currentGame.moves} moves!
                   </Text>
                   
-                  {currentGame.endTime && (
-                    <Text variant="bodyMedium" style={styles.victoryTime}>
-                      Time: {Math.floor((currentGame.endTime - currentGame.startTime) / 1000)}s
-                    </Text>
-                  )}
+                  <Text variant="bodyMedium" style={styles.victoryTime}>
+                    Time: {Math.floor(currentGame.elapsedTime)}s
+                  </Text>
 
                   <View style={styles.victoryButtons}>
                     <Button
