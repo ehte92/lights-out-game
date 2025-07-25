@@ -15,13 +15,15 @@ import { useAppTheme, useAppBorders, useAppShadows } from '../../contexts/AppThe
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
 interface PremiumButtonProps {
-  title: string;
+  title?: string;
   onPress: () => void;
   size?: 'large' | 'medium' | 'small';
   variant?: 'primary' | 'secondary' | 'ghost' | 'continue';
   disabled?: boolean;
   style?: ViewStyle;
   textStyle?: TextStyle;
+  children?: React.ReactNode;
+  accessibilityLabel?: string;
 }
 
 export const PremiumButton: React.FC<PremiumButtonProps> = ({
@@ -32,6 +34,8 @@ export const PremiumButton: React.FC<PremiumButtonProps> = ({
   disabled = false,
   style,
   textStyle,
+  children,
+  accessibilityLabel,
 }) => {
   const { colors, paperTheme } = useAppTheme();
   const borders = useAppBorders();
@@ -173,20 +177,30 @@ export const PremiumButton: React.FC<PremiumButtonProps> = ({
       onPressIn={handlePressIn}
       onPressOut={handlePressOut}
       disabled={disabled}
+      accessibilityLabel={accessibilityLabel || title}
+      accessibilityRole="button"
     >
-      <Text
-        style={[
-          styles.text,
-          {
-            color: getTextColor(),
-            fontSize: getFontSize(),
-            fontWeight: '900',
-          },
-          textStyle,
-        ]}
-      >
-        {title}
-      </Text>
+      {children ? (
+        children
+      ) : (
+        <Text
+          style={[
+            styles.text,
+            {
+              color: getTextColor(),
+              fontSize: getFontSize(),
+              fontWeight: '900',
+            },
+            textStyle,
+          ]}
+          numberOfLines={1}
+          adjustsFontSizeToFit={true}
+          ellipsizeMode="tail"
+          minimumFontScale={0.8}
+        >
+          {title}
+        </Text>
+      )}
     </AnimatedPressable>
   );
 };

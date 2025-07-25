@@ -1,5 +1,5 @@
 import React, { useCallback } from 'react';
-import { Pressable, StyleSheet } from 'react-native';
+import { Pressable, StyleSheet, Platform } from 'react-native';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -33,6 +33,15 @@ export const GameCell: React.FC<GameCellProps> = React.memo(({
   const borders = useAppBorders();
   const scale = useSharedValue(1);
   const pressed = useSharedValue(false);
+  
+  // Pre-calculate platform-specific shadow configuration on JS thread
+  const shadowConfig = Platform.OS === 'ios' ? {
+    shadowColor: '#000000',
+    shadowOffset: { width: 4, height: 4 },
+    shadowRadius: 0, // Sharp neobrutalist shadow
+  } : {
+    // Android uses elevation only
+  };
 
   const handlePress = useCallback(() => {
     if (disabled) return;
@@ -56,20 +65,31 @@ export const GameCell: React.FC<GameCellProps> = React.memo(({
   }, [pressed]);
 
   const animatedStyle = useAnimatedStyle(() => {
-    // Neobrutalist cell colors - neon green when on, white when off
+    // Enhanced cell colors for floating design
     const backgroundColor = isOn ? colors.cellOn : colors.cellOff;
     
-    return {
+    // Build style object with pre-calculated platform shadows
+    const style = {
       transform: [
         { scale: scale.value },
-        // Add slight press translation for neobrutalist effect
-        { translateX: pressed.value ? 1 : 0 },
-        { translateY: pressed.value ? 1 : 0 },
+        // Floating press effect
+        { translateX: pressed.value ? 2 : 0 },
+        { translateY: pressed.value ? 2 : 0 },
       ],
       backgroundColor,
-      borderWidth: borders.medium, // Thick black border
-      borderColor: borders.color,   // Pure black
+      borderWidth: borders.medium, // Strong borders for definition
+      borderColor: borders.color,
+      ...shadowConfig, // Apply pre-calculated static shadow properties
     };
+    
+    // Add animated shadow properties based on platform
+    if (Platform.OS === 'ios') {
+      style.shadowOpacity = pressed.value ? 0.3 : 0.7; // Animated shadow opacity
+    } else {
+      style.elevation = pressed.value ? 2 : 6; // Android elevation animation
+    }
+    
+    return style;
   });
 
   return (
@@ -96,7 +116,7 @@ GameCell.displayName = 'GameCell';
 const styles = StyleSheet.create({
   cell: {
     borderRadius: 0, // Sharp corners for neobrutalism
-    margin: 4,
-    // No overflow hidden - let sharp edges show
+    // No margin - spacing handled by grid gap
+    // Individual floating cell styling
   },
 });

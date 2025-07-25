@@ -18,8 +18,8 @@ interface GameGridProps {
 }
 
 const { width: screenWidth } = Dimensions.get('window');
-const GRID_PADDING = 40;
-const MAX_GRID_WIDTH = Math.min(screenWidth - GRID_PADDING, 400);
+const GRID_MARGIN = 24; // Reduced margins for larger grid
+const MAX_GRID_WIDTH = Math.min(screenWidth - GRID_MARGIN, 500); // Increased max size
 
 export const GameGrid: React.FC<GameGridProps> = ({
   gameState,
@@ -30,18 +30,37 @@ export const GameGrid: React.FC<GameGridProps> = ({
   const borders = useAppBorders();
   const scale = useSharedValue(1);
   
-  const { cellSize, gridWidth } = useMemo(() => {
+  const { cellSize, gridWidth, cellGap } = useMemo(() => {
     const size = gameState.gridSize;
-    const totalMargin = (size - 1) * 8; // 4px margin on each side of each cell
-    const availableWidth = MAX_GRID_WIDTH - totalMargin;
-    const calculatedCellSize = Math.floor(availableWidth / size);
-    const calculatedGridWidth = (calculatedCellSize * size) + totalMargin;
+    const gap = 12; // Generous gap for floating cell aesthetic
+    
+    // Use most of the screen width for natural floating appearance
+    const targetWidth = Math.min(screenWidth * 0.9, 480); // Larger for floating design
+    
+    // Calculate total gap space needed
+    const totalGapSpace = (size - 1) * gap;
+    
+    // Available space for just the cells (no padding needed for floating design)
+    const availableForCells = targetWidth - totalGapSpace;
+    
+    // Calculate cell size
+    const rawCellSize = availableForCells / size;
+    const calculatedCellSize = Math.floor(rawCellSize);
+    
+    // Ensure excellent cell size for floating design
+    const minCellSize = 70; // Larger cells for better floating aesthetic
+    const finalCellSize = Math.max(calculatedCellSize, minCellSize);
+    
+    // Recalculate grid width based on final cell size
+    const actualCellsWidth = finalCellSize * size;
+    const finalGridWidth = actualCellsWidth + totalGapSpace;
     
     return {
-      cellSize: calculatedCellSize,
-      gridWidth: calculatedGridWidth,
+      cellSize: finalCellSize,
+      gridWidth: finalGridWidth,
+      cellGap: gap,
     };
-  }, [gameState.gridSize]);
+  }, [gameState.gridSize, screenWidth]);
 
   // Victory animation
   React.useEffect(() => {
@@ -60,17 +79,21 @@ export const GameGrid: React.FC<GameGridProps> = ({
   }));
 
   const renderRow = (row: boolean[], rowIndex: number) => (
-    <View key={rowIndex} style={styles.row}>
+    <View key={rowIndex} style={[styles.row, { marginBottom: rowIndex < gameState.gridSize - 1 ? cellGap : 0 }]}>
       {row.map((cellValue, colIndex) => (
-        <GameCell
+        <View
           key={`${rowIndex}-${colIndex}`}
-          isOn={cellValue}
-          row={rowIndex}
-          col={colIndex}
-          size={cellSize}
-          onPress={onCellPress}
-          disabled={disabled || gameState.isComplete}
-        />
+          style={{ marginRight: colIndex < row.length - 1 ? cellGap : 0 }}
+        >
+          <GameCell
+            isOn={cellValue}
+            row={rowIndex}
+            col={colIndex}
+            size={cellSize}
+            onPress={onCellPress}
+            disabled={disabled || gameState.isComplete}
+          />
+        </View>
       ))}
     </View>
   );
@@ -79,14 +102,10 @@ export const GameGrid: React.FC<GameGridProps> = ({
     <View style={styles.container}>
       <Animated.View 
         style={[
-          styles.grid,
+          styles.floatingGrid,
           {
             width: gridWidth,
             height: gridWidth,
-            backgroundColor: colors.background, // Pure white neobrutalist background
-            borderWidth: borders.thick, // Thick black border
-            borderColor: borders.color,
-            borderRadius: borders.radius.none, // Sharp corners
           },
           animatedStyle,
         ]}
@@ -101,14 +120,16 @@ const styles = StyleSheet.create({
   container: {
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 20,
+    paddingVertical: 24, // Generous spacing for floating design
+    flex: 1, // Fill available space naturally
   },
-  grid: {
-    padding: 12, // Keep padding for spacing
-    // All other styles moved to inline styles for neobrutalist theming
+  floatingGrid: {
+    // No background, no borders, no container styling
+    // Cells float naturally in space
   },
   row: {
     flexDirection: 'row',
     justifyContent: 'center',
+    alignItems: 'center',
   },
 });

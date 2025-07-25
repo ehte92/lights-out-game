@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { View, StyleSheet } from 'react-native';
-import { Surface, Text, Divider } from 'react-native-paper';
+import { View, StyleSheet, Platform } from 'react-native';
+import { Text } from 'react-native-paper';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -8,7 +8,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import { GameState } from '../../types/game';
 import { useGameTheme } from '../../contexts/GameThemeContext';
-import { useAppTheme } from '../../contexts/AppThemeContext';
+import { useAppTheme, useAppTypography, useAppBorders, useAppShadows } from '../../contexts/AppThemeContext';
 
 interface GameStatsProps {
   gameState: GameState | null;
@@ -21,8 +21,18 @@ export const GameStats: React.FC<GameStatsProps> = React.memo(({
 }) => {
   const { gameColors } = useGameTheme();
   const { colors: appColors, paperTheme } = useAppTheme();
+  const typography = useAppTypography();
+  const borders = useAppBorders();
+  const shadows = useAppShadows();
   const [elapsedTime, setElapsedTime] = useState(0);
   const moveScale = useSharedValue(1);
+
+  // Reset elapsed time when new game starts
+  useEffect(() => {
+    if (gameState && gameState.moves === 0 && gameState.elapsedTime === 0) {
+      setElapsedTime(0);
+    }
+  }, [gameState?.moves, gameState?.elapsedTime]);
 
   // Timer effect
   useEffect(() => {
@@ -76,40 +86,53 @@ export const GameStats: React.FC<GameStatsProps> = React.memo(({
   }
 
   return (
-    <Surface style={[styles.container, { backgroundColor: gameColors.panelBackground }]} elevation={2}>
+    <View style={[
+      styles.container,
+      {
+        backgroundColor: 'rgba(255, 255, 255, 0.95)', // Semi-transparent white for floating effect
+        borderWidth: borders.medium, // Reduced border for floating design
+        borderColor: borders.color,
+        borderRadius: 8, // Subtle rounding for floating panel
+        ...Platform.select({
+          ios: {
+            shadowColor: '#000000',
+            shadowOffset: { width: 0, height: 6 },
+            shadowOpacity: 0.3,
+            shadowRadius: 0,
+          },
+          android: { elevation: 8 },
+        }),
+      }
+    ]}>
       <View style={styles.statItem}>
-        <Text variant="labelSmall" style={[styles.statLabel, { color: paperTheme.colors.onSurfaceVariant }]}>
-          Moves
+        <Text style={[typography.labelSmall, styles.statLabel, { color: appColors.onBackground }]}>
+          MOVES
         </Text>
         <Animated.View style={moveAnimatedStyle}>
-          <Text variant="titleLarge" style={[styles.statValue, { color: paperTheme.colors.onSurface }]}>
+          <Text style={[typography.titleLarge, styles.statValue, { color: appColors.onBackground }]}>
             {gameState.moves}
           </Text>
         </Animated.View>
       </View>
 
-      <Divider style={styles.separator} />
-
       <View style={styles.statItem}>
-        <Text variant="labelSmall" style={[styles.statLabel, { color: paperTheme.colors.onSurfaceVariant }]}>
-          Time
+        <Text style={[typography.labelSmall, styles.statLabel, { color: appColors.onBackground }]}>
+          TIME
         </Text>
-        <Text variant="titleLarge" style={[styles.statValue, { color: paperTheme.colors.onSurface }]}>
+        <Text style={[typography.titleLarge, styles.statValue, { color: appColors.onBackground }]}>
           {formatTime(displayTime)}
         </Text>
       </View>
 
-      <Divider style={styles.separator} />
-
       <View style={styles.statItem}>
-        <Text variant="labelSmall" style={[styles.statLabel, { color: paperTheme.colors.onSurfaceVariant }]}>
-          Difficulty
+        <Text style={[typography.labelSmall, styles.statLabel, { color: appColors.onBackground }]}>
+          DIFFICULTY
         </Text>
-        <Text variant="titleMedium" style={[styles.statValue, styles.difficultyText, { color: gameColors.accent }]}>
+        <Text style={[typography.titleMedium, styles.statValue, styles.difficultyText, { color: appColors.secondary, fontWeight: '900' }]}>
           {formattedDifficulty}
         </Text>
       </View>
-    </Surface>
+    </View>
   );
 });
 
@@ -120,30 +143,29 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-around',
-    borderRadius: 16,
-    paddingVertical: 16,
-    paddingHorizontal: 20,
+    borderRadius: 0, // Sharp corners for neobrutalism
+    paddingVertical: 14, // Optimized padding
+    paddingHorizontal: 24,
     marginHorizontal: 16,
-    marginVertical: 10,
+    marginVertical: 6, // Minimal margin for better game focus
   },
   statItem: {
     alignItems: 'center',
     flex: 1,
+    paddingHorizontal: 6, // Reduced padding for more compact design
   },
   statLabel: {
-    marginBottom: 4,
-    fontWeight: '600',
+    marginBottom: 2, // Tighter spacing
+    fontWeight: '900', // Bold for neobrutalism
     textTransform: 'uppercase',
-    letterSpacing: 0.5,
+    letterSpacing: 0.8, // Better letter spacing for readability
   },
   statValue: {
-    fontWeight: 'bold',
+    fontWeight: '900', // Extra bold for neobrutalism
+    lineHeight: 22, // Better line height for large numbers
   },
   difficultyText: {
     // Additional styles for difficulty text
   },
-  separator: {
-    height: 32,
-    marginHorizontal: 12,
-  },
+  // Separator removed - using spacing instead
 });

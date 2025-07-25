@@ -91,6 +91,13 @@ export const useGameStore = create<GameStore>((set, get) => ({
     const gameGridSize = gridSize || settings.gridSize;
     const gameDifficulty = difficulty || settings.difficulty;
     
+    if (__DEV__) {
+      console.log('🆕 Starting new game:', { 
+        gridSize: gameGridSize, 
+        difficulty: gameDifficulty 
+      });
+    }
+    
     const newGame = createInitialGameState(gameGridSize, gameDifficulty);
     
     set({
@@ -99,6 +106,16 @@ export const useGameStore = create<GameStore>((set, get) => ({
       isPaused: false,
       showVictory: false,
     });
+    
+    if (__DEV__) {
+      console.log('🆕 New game created:', { 
+        isPlaying: true,
+        isPaused: false,
+        hasResumeTime: !!newGame.lastResumeTime,
+        moves: newGame.moves,
+        isComplete: newGame.isComplete
+      });
+    }
     
     await updateLastPlayed();
     await GameHaptics.buttonPress();
@@ -155,10 +172,21 @@ export const useGameStore = create<GameStore>((set, get) => ({
   },
 
   pauseGame: () => {
-    const { currentGame } = get();
+    const { currentGame, isPlaying } = get();
+    
+    if (__DEV__) {
+      console.log('🟡 pauseGame called:', { 
+        hasCurrentGame: !!currentGame, 
+        isPlaying, 
+        currentlyPaused: get().isPaused,
+        hasResumeTime: !!currentGame?.lastResumeTime 
+      });
+    }
+    
     if (!currentGame || !currentGame.lastResumeTime) {
       set({ isPaused: true });
       GameHaptics.buttonPress();
+      if (__DEV__) console.log('🟡 Game paused (no resume time)');
       return;
     }
 
@@ -176,13 +204,25 @@ export const useGameStore = create<GameStore>((set, get) => ({
       isPaused: true 
     });
     GameHaptics.buttonPress();
+    
+    if (__DEV__) console.log('🟡 Game paused with time update:', { elapsedTime: updatedGame.elapsedTime });
   },
 
   resumeGame: () => {
-    const { currentGame } = get();
+    const { currentGame, isPaused } = get();
+    
+    if (__DEV__) {
+      console.log('🟢 resumeGame called:', { 
+        hasCurrentGame: !!currentGame, 
+        currentlyPaused: isPaused,
+        isComplete: currentGame?.isComplete 
+      });
+    }
+    
     if (!currentGame) {
       set({ isPaused: false });
       GameHaptics.buttonPress();
+      if (__DEV__) console.log('🟢 Game resumed (no current game)');
       return;
     }
 
@@ -197,6 +237,8 @@ export const useGameStore = create<GameStore>((set, get) => ({
       isPaused: false 
     });
     GameHaptics.buttonPress();
+    
+    if (__DEV__) console.log('🟢 Game resumed with new resume time');
   },
 
   resetGame: () => {

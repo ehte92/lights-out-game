@@ -2,19 +2,15 @@ import React, { useEffect, useCallback } from 'react';
 import {
   View,
   StyleSheet,
-  SafeAreaView,
   StatusBar,
+  Platform,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
 import {
   Text,
-  Button,
-  Surface,
   Portal,
   Modal,
-  Card,
-  Divider,
-  IconButton,
 } from 'react-native-paper';
 import Animated, {
   useSharedValue,
@@ -23,17 +19,21 @@ import Animated, {
   withSequence,
   withDelay,
 } from 'react-native-reanimated';
-import { LinearGradient } from 'expo-linear-gradient';
+import { MaterialIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useGameStore } from '../stores/gameStore';
 import { GameGrid } from '../components/game/GameGrid';
 import { GameStats } from '../components/game/GameStats';
 import { DevPanel } from '../components/development/DevPanel';
-import { useAppTheme } from '../contexts/AppThemeContext';
+import { useAppTheme, useAppTypography, useAppBorders, useAppShadows } from '../contexts/AppThemeContext';
+import { PremiumButton } from '../components/ui/PremiumButton';
 import { GameThemeProvider } from '../contexts/GameThemeContext';
 
 export const GameScreen: React.FC = () => {
   const { colors, paperTheme } = useAppTheme();
+  const typography = useAppTypography();
+  const borders = useAppBorders();
+  const shadows = useAppShadows();
   const router = useRouter();
   const {
     currentGame,
@@ -51,21 +51,27 @@ export const GameScreen: React.FC = () => {
     loadAchievements,
   } = useGameStore();
 
-  // Navigation-based auto-pause
+  // Navigation-based auto-pause - only handle actual navigation events
   useFocusEffect(
     useCallback(() => {
-      // Resume game when screen gains focus
-      if (currentGame && !currentGame.isComplete && isPaused) {
-        resumeGame();
-      }
+      // Don't interfere with manual pause actions or modal interactions
       
       return () => {
-        // Pause game when screen loses focus
-        if (currentGame && !currentGame.isComplete && isPlaying && !isPaused) {
+        // Only pause if no modals are open and game is actively playing
+        // Removed currentGame from dependencies to prevent re-runs on game state changes
+        const { currentGame: latestGame } = useGameStore.getState();
+        
+        if (latestGame && 
+            !latestGame.isComplete && 
+            isPlaying && 
+            !isPaused && 
+            !showVictory && 
+            !showResetConfirm &&
+            !isCreatingGame) {
           pauseGame();
         }
       };
-    }, [currentGame, isPlaying, isPaused, pauseGame, resumeGame])
+    }, [isPlaying, isPaused, showVictory, showResetConfirm, isCreatingGame, pauseGame])
   );
 
   const victoryScale = useSharedValue(0);
@@ -115,28 +121,33 @@ export const GameScreen: React.FC = () => {
     opacity: victoryOpacity.value,
   }));
 
-  const handleButtonPress = useCallback((action: () => void) => {
-    action();
-  }, []);
-
-  const handleNewGame = useCallback(() => {
-    handleButtonPress(async () => {
-      setShowVictory(false);
-      await startNewGame();
-    });
-  }, [handleButtonPress, setShowVictory, startNewGame]);
+  const handleNewGame = useCallback(async () => {
+    setIsCreatingGame(true);
+    setShowVictory(false);
+    await startNewGame();
+    // Brief delay to prevent navigation interference
+    setTimeout(() => setIsCreatingGame(false), 100);
+  }, [setShowVictory, startNewGame]);
 
   const handlePause = useCallback(() => {
-    handleButtonPress(() => {
-      if (isPaused) {
-        resumeGame();
-      } else {
-        pauseGame();
-      }
-    });
-  }, [handleButtonPress, isPaused, resumeGame, pauseGame]);
+    if (__DEV__) {
+      console.log('🎮 Pause button pressed:', { 
+        currentlyPaused: isPaused,
+        action: isPaused ? 'resume' : 'pause',
+        hasCurrentGame: !!currentGame,
+        isPlaying
+      });
+    }
+    
+    if (isPaused) {
+      resumeGame();
+    } else {
+      pauseGame();
+    }
+  }, [isPaused, resumeGame, pauseGame, currentGame, isPlaying]);
 
   const [showResetConfirm, setShowResetConfirm] = React.useState(false);
+  const [isCreatingGame, setIsCreatingGame] = React.useState(false);
 
   const handleReset = useCallback(() => {
     setShowResetConfirm(true);
@@ -144,54 +155,43 @@ export const GameScreen: React.FC = () => {
 
   const confirmReset = useCallback(() => {
     setShowResetConfirm(false);
-    handleButtonPress(resetGame);
-  }, [handleButtonPress, resetGame]);
+    resetGame();
+  }, [resetGame]);
 
   if (!currentGame) {
     return (
-      <Surface style={[styles.container, { backgroundColor: colors.gameBackground }]}>
+      <View style={[styles.container, { backgroundColor: colors.background }]}>
         <SafeAreaView style={styles.safeArea}>
           <View style={styles.loadingContainer}>
-            <Text variant="headlineMedium" style={{ color: paperTheme.colors.onSurface }}>
+            <Text style={[typography.headlineMedium, { color: colors.onBackground }]}>
               Loading...
             </Text>
           </View>
         </SafeAreaView>
-      </Surface>
+      </View>
     );
   }
 
   return (
-    <LinearGradient
-      colors={[colors.background, colors.surface]}
-      style={styles.container}
-    >
+    <View style={[styles.container, styles.atmosphericBackground]}>
       <StatusBar 
-        barStyle={paperTheme.dark ? 'light-content' : 'dark-content'} 
+        barStyle="light-content" 
         translucent={true}
         backgroundColor="transparent"
       />
       <SafeAreaView style={styles.safeArea}>
-        {/* Header */}
-        <Surface style={[styles.header, { backgroundColor: colors.surface }]} elevation={1}>
-          <View style={styles.headerContent}>
-            <IconButton 
-              icon="arrow-left" 
-              size={24}
-              iconColor={paperTheme.colors.onSurface}
-              onPress={() => router.back()}
-              style={styles.backButton}
-            />
-            <View style={styles.headerText}>
-              <Text variant="displayMedium" style={{ color: paperTheme.colors.onSurface }}>
-                Lights Out
-              </Text>
-              <Text variant="bodyLarge" style={{ color: paperTheme.colors.onSurfaceVariant }}>
-                Turn off all the lights
-              </Text>
-            </View>
-          </View>
-        </Surface>
+        {/* Minimal Header with Icon Back Button */}
+        <View style={styles.headerMinimal}>
+          <PremiumButton
+            title=""
+            onPress={() => router.back()}
+            style={styles.backButtonMinimal}
+            size="small"
+            variant="secondary"
+          >
+            <MaterialIcons name="arrow-back" size={20} color="#000000" />
+          </PremiumButton>
+        </View>
 
         {/* Game Area - Wrapped with GameThemeProvider */}
         <GameThemeProvider>
@@ -206,42 +206,85 @@ export const GameScreen: React.FC = () => {
               disabled={isPaused}
             />
             
-            {/* Pause Overlay */}
+            {/* Neobrutalist Pause Overlay */}
             {isPaused && (
-              <Surface style={styles.pauseOverlay} elevation={5}>
-                <Text variant="headlineLarge" style={{ color: paperTheme.colors.onSurface }}>
+              <View style={[
+                styles.pauseOverlay,
+                {
+                  backgroundColor: colors.background,
+                  borderWidth: borders.extra,
+                  borderColor: borders.color,
+                }
+              ]}>
+                <Text style={[typography.headlineLarge, { color: colors.onBackground }]}>
                   Game Paused
                 </Text>
-              </Surface>
+              </View>
             )}
           </View>
 
-          {/* Control Buttons */}
-          <Surface style={[styles.controls, { backgroundColor: colors.surface }]} elevation={2}>
-          <Button
-            mode="contained"
-            onPress={handlePause}
-            style={styles.controlButton}
-            buttonColor={isPaused ? paperTheme.colors.tertiary : paperTheme.colors.error}
-          >
-            {isPaused ? 'Resume' : 'Pause'}
-          </Button>
-          <Button
-            mode="outlined"
-            onPress={handleReset}
-            style={styles.controlButton}
-          >
-            Reset
-          </Button>
-          <Button
-            mode="contained"
-            onPress={handleNewGame}
-            style={styles.controlButton}
-            buttonColor={paperTheme.colors.primary}
-          >
-            New Game
-          </Button>
-        </Surface>
+          {/* Compact Control Buttons */}
+          <View style={[
+            styles.controls,
+            {
+              backgroundColor: 'rgba(255, 255, 255, 0.95)', // Semi-transparent for floating effect
+              borderWidth: borders.medium, // Reduced border
+              borderColor: borders.color,
+              borderRadius: 8, // Subtle rounding for floating panel
+              ...Platform.select({
+                ios: {
+                  shadowColor: '#000000',
+                  shadowOffset: { width: 0, height: 6 },
+                  shadowOpacity: 0.3,
+                  shadowRadius: 0,
+                },
+                android: { elevation: 8 },
+              }),
+            }
+          ]}>
+            <PremiumButton
+              title=""
+              onPress={handlePause}
+              style={styles.controlButtonCompact}
+              size="medium"
+              variant={isPaused ? 'continue' : 'secondary'}
+              accessibilityLabel={isPaused ? 'Resume Game' : 'Pause Game'}
+            >
+              <MaterialIcons 
+                name={isPaused ? 'play-arrow' : 'pause'} 
+                size={20} 
+                color={isPaused ? '#FFFFFF' : '#000000'} 
+              />
+            </PremiumButton>
+            <PremiumButton
+              title=""
+              onPress={handleReset}
+              style={styles.controlButtonCompact}
+              size="medium"
+              variant="secondary"
+              accessibilityLabel="Reset Current Game"
+            >
+              <MaterialIcons 
+                name="refresh" 
+                size={20} 
+                color="#000000" 
+              />
+            </PremiumButton>
+            <PremiumButton
+              title=""
+              onPress={handleNewGame}
+              style={styles.controlButtonCompact}
+              size="medium"
+              variant="primary"
+              accessibilityLabel="Start New Game"
+            >
+              <MaterialIcons 
+                name="add" 
+                size={20} 
+                color="#FFFFFF" 
+              />
+            </PremiumButton>
+          </View>
         </GameThemeProvider>
 
         {/* Victory Modal */}
@@ -252,39 +295,48 @@ export const GameScreen: React.FC = () => {
             contentContainerStyle={styles.modalContainer}
           >
             <Animated.View style={victoryAnimatedStyle}>
-              <Card style={[styles.victoryCard, { backgroundColor: colors.accent }]}>
-                <Card.Content style={styles.victoryContent}>
-                  <Text variant="headlineLarge" style={styles.victoryTitle}>
+              <View style={[
+                styles.victoryCard,
+                {
+                  backgroundColor: colors.secondary, // Hot pink background for victory
+                  borderWidth: borders.extra,
+                  borderColor: borders.color,
+                  ...Platform.select({
+                    ios: shadows.large,
+                    android: { elevation: shadows.large.elevation },
+                  }),
+                }
+              ]}>
+                <View style={styles.victoryContent}>
+                  <Text style={[typography.headlineLarge, styles.victoryTitle]}>
                     🎉 Victory! 🎉
                   </Text>
-                  <Divider style={styles.victoryDivider} />
-                  <Text variant="bodyLarge" style={styles.victorySubtitle}>
+                  <View style={styles.victoryDivider} />
+                  <Text style={[typography.bodyLarge, styles.victorySubtitle]}>
                     Puzzle completed in {currentGame.moves} moves!
                   </Text>
                   
-                  <Text variant="bodyMedium" style={styles.victoryTime}>
+                  <Text style={[typography.bodyMedium, styles.victoryTime]}>
                     Time: {Math.floor(currentGame.elapsedTime)}s
                   </Text>
 
                   <View style={styles.victoryButtons}>
-                    <Button
-                      mode="contained"
+                    <PremiumButton
+                      title="New Game"
                       onPress={handleNewGame}
                       style={styles.victoryButton}
-                      buttonColor={paperTheme.colors.primary}
-                    >
-                      New Game
-                    </Button>
-                    <Button
-                      mode="outlined"
+                      size="medium"
+                    />
+                    <PremiumButton
+                      title="Continue"
                       onPress={() => setShowVictory(false)}
                       style={styles.victoryButton}
-                    >
-                      Continue
-                    </Button>
+                      size="medium"
+                      variant="secondary"
+                    />
                   </View>
-                </Card.Content>
-              </Card>
+                </View>
+              </View>
             </Animated.View>
           </Modal>
         </Portal>
@@ -296,40 +348,50 @@ export const GameScreen: React.FC = () => {
             onDismiss={() => setShowResetConfirm(false)}
             contentContainerStyle={styles.modalContainer}
           >
-            <Card>
-              <Card.Content>
-                <Text variant="headlineSmall" style={styles.confirmTitle}>
+            <View style={[
+              styles.confirmCard,
+              {
+                backgroundColor: colors.background,
+                borderWidth: borders.extra,
+                borderColor: borders.color,
+                ...Platform.select({
+                  ios: shadows.large,
+                  android: { elevation: shadows.large.elevation },
+                }),
+              }
+            ]}>
+              <View style={styles.confirmContent}>
+                <Text style={[typography.headlineSmall, styles.confirmTitle]}>
                   Reset Game
                 </Text>
-                <Text variant="bodyMedium" style={styles.confirmMessage}>
+                <Text style={[typography.bodyMedium, styles.confirmMessage]}>
                   Are you sure you want to restart this puzzle?
                 </Text>
                 <View style={styles.confirmButtons}>
-                  <Button
-                    mode="outlined"
+                  <PremiumButton
+                    title="Cancel"
                     onPress={() => setShowResetConfirm(false)}
                     style={styles.confirmButton}
-                  >
-                    Cancel
-                  </Button>
-                  <Button
-                    mode="contained"
+                    size="medium"
+                    variant="secondary"
+                  />
+                  <PremiumButton
+                    title="Reset"
                     onPress={confirmReset}
                     style={styles.confirmButton}
-                    buttonColor={paperTheme.colors.error}
-                  >
-                    Reset
-                  </Button>
+                    size="medium"
+                    variant="continue"
+                  />
                 </View>
-              </Card.Content>
-            </Card>
+              </View>
+            </View>
           </Modal>
         </Portal>
 
         {/* Development Panel */}
         <DevPanel />
       </SafeAreaView>
-    </LinearGradient>
+    </View>
   );
 };
 
@@ -337,53 +399,55 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
+  atmosphericBackground: {
+    backgroundColor: '#1a1a2e', // Rich dark blue base
+    // Add gradient effect through nested views if needed
+  },
   safeArea: {
     flex: 1,
   },
-  header: {
-    paddingVertical: 20,
-    paddingHorizontal: 20,
-    marginBottom: 10,
-    borderRadius: 16,
-    marginHorizontal: 16,
+  // Minimal header styles
+  headerMinimal: {
+    paddingVertical: 12, // Consistent with other elements
+    paddingHorizontal: 20, // Match other horizontal padding
+    marginBottom: 8, // Better visual separation
   },
-  headerContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
+  // Removed headerContent - no longer needed
+  backButtonMinimal: {
+    alignSelf: 'flex-start',
+    minWidth: 44, // Better touch target
+    minHeight: 44,
   },
-  backButton: {
-    margin: 0,
-    marginRight: 8,
-  },
-  headerText: {
-    flex: 1,
-    alignItems: 'center',
-  },
+  // Removed headerText - no longer needed
   gameContainer: {
     flex: 1,
     justifyContent: 'center',
+    alignItems: 'center',
     position: 'relative',
+    // No padding needed for floating design - let cells breathe naturally
   },
   pauseOverlay: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0, 0, 0, 0.9)',
     justifyContent: 'center',
     alignItems: 'center',
-    borderRadius: 16,
+    borderRadius: 0, // Sharp corners for neobrutalism
     margin: 16,
   },
   controls: {
     flexDirection: 'row',
-    justifyContent: 'space-around',
-    paddingHorizontal: 20,
-    paddingVertical: 16,
-    gap: 12,
+    justifyContent: 'space-between', // Better distribution
+    paddingHorizontal: 12, // Further reduced padding to accommodate wider buttons
+    paddingVertical: 18, // Adjusted for new button height
+    gap: 6, // Reduced gap for wider buttons
     marginHorizontal: 16,
-    marginBottom: 16,
-    borderRadius: 16,
+    marginBottom: 20, // More bottom space
+    borderRadius: 0, // Sharp corners for neobrutalism
   },
-  controlButton: {
+  controlButtonCompact: {
     flex: 1,
+    height: 56, // Increased height to prevent text truncation
+    minHeight: 56,
+    minWidth: 95, // Slightly reduced from 100 to prevent overflow
   },
   loadingContainer: {
     flex: 1,
@@ -399,7 +463,7 @@ const styles = StyleSheet.create({
   
   // Victory modal styles
   victoryCard: {
-    borderRadius: 20,
+    borderRadius: 0, // Sharp corners for neobrutalism
     overflow: 'hidden',
   },
   victoryContent: {
@@ -409,24 +473,26 @@ const styles = StyleSheet.create({
   victoryTitle: {
     textAlign: 'center',
     marginBottom: 12,
-    color: '#ffffff',
-    fontWeight: 'bold',
+    color: '#FFFFFF', // White text on hot pink background
+    fontWeight: '900',
   },
   victoryDivider: {
-    backgroundColor: 'rgba(255, 255, 255, 0.3)',
-    height: 1,
+    backgroundColor: '#FFFFFF', // White divider on hot pink background
+    height: 4, // Thick divider
     width: '100%',
     marginBottom: 16,
   },
   victorySubtitle: {
     textAlign: 'center',
     marginBottom: 8,
-    color: '#ffffff',
+    color: '#FFFFFF', // White text on hot pink background
+    fontWeight: '700',
   },
   victoryTime: {
     textAlign: 'center',
     marginBottom: 24,
-    color: 'rgba(255, 255, 255, 0.9)',
+    color: '#FFFFFF', // White text on hot pink background
+    fontWeight: '600',
   },
   victoryButtons: {
     flexDirection: 'row',
@@ -435,16 +501,29 @@ const styles = StyleSheet.create({
   },
   victoryButton: {
     flex: 1,
+    minWidth: 100, // Prevent excessive shrinking that causes text wrap
   },
   
   // Confirmation modal styles
+  confirmCard: {
+    borderRadius: 0, // Sharp corners for neobrutalism
+    overflow: 'hidden',
+  },
+  confirmContent: {
+    padding: 24,
+    alignItems: 'center',
+  },
   confirmTitle: {
     textAlign: 'center',
     marginBottom: 16,
+    color: '#000000', // Black text for neobrutalism
+    fontWeight: '900',
   },
   confirmMessage: {
     textAlign: 'center',
     marginBottom: 24,
+    color: '#000000', // Black text for neobrutalism
+    fontWeight: '600',
   },
   confirmButtons: {
     flexDirection: 'row',
@@ -453,5 +532,6 @@ const styles = StyleSheet.create({
   },
   confirmButton: {
     flex: 1,
+    minWidth: 100, // Prevent excessive shrinking that causes text wrap
   },
 });
