@@ -9,6 +9,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import { GameCell } from './GameCell';
 import { GameState } from '../../types/game';
+import { useAppTheme, useAppBorders } from '../../contexts/AppThemeContext';
 
 interface GameGridProps {
   gameState: GameState;
@@ -25,6 +26,8 @@ export const GameGrid: React.FC<GameGridProps> = ({
   onCellPress,
   disabled = false,
 }) => {
+  const { colors } = useAppTheme();
+  const borders = useAppBorders();
   const scale = useSharedValue(1);
   
   const { cellSize, gridWidth } = useMemo(() => {
@@ -80,6 +83,10 @@ export const GameGrid: React.FC<GameGridProps> = ({
           {
             width: gridWidth,
             height: gridWidth,
+            backgroundColor: colors.background, // Pure white neobrutalist background
+            borderWidth: borders.thick, // Thick black border
+            borderColor: borders.color,
+            borderRadius: borders.radius.none, // Sharp corners
           },
           animatedStyle,
         ]}
@@ -97,14 +104,8 @@ const styles = StyleSheet.create({
     paddingVertical: 20,
   },
   grid: {
-    backgroundColor: 'rgba(0, 0, 0, 0.1)',
-    borderRadius: 20,
-    padding: 12,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 8,
+    padding: 12, // Keep padding for spacing
+    // All other styles moved to inline styles for neobrutalist theming
   },
   row: {
     flexDirection: 'row',

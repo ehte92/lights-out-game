@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useCallback } from 'react';
 import { useColorScheme } from 'react-native';
 import type { MD3Theme } from 'react-native-paper';
-import { appTheme, AppColors, AppGradients, AppTypography, AppSpacing, AppAnimations } from '../themes/appTheme';
+import { appTheme, AppColors, AppGradients, AppTypography, AppSpacing, AppAnimations, AppBorders, AppShadows } from '../themes/appTheme';
 import type { AppTheme } from '../themes/appTheme';
 
 interface AppThemeContextValue {
@@ -12,6 +12,8 @@ interface AppThemeContextValue {
   typography: typeof AppTypography;
   spacing: typeof AppSpacing;
   animations: typeof AppAnimations;
+  borders: typeof AppBorders;
+  shadows: typeof AppShadows;
   
   // Paper theme for React Native Paper components
   paperTheme: MD3Theme;
@@ -39,8 +41,8 @@ interface AppThemeProviderProps {
 }
 
 export const AppThemeProvider: React.FC<AppThemeProviderProps> = ({ children }) => {
-  // Default to dark mode for better eye comfort
-  const [isDark, setIsDark] = useState(true);
+  // Default to light mode for neobrutalist design
+  const [isDark, setIsDark] = useState(false);
   
   const toggleDarkMode = useCallback(() => {
     setIsDark(prev => !prev);
@@ -67,6 +69,8 @@ export const AppThemeProvider: React.FC<AppThemeProviderProps> = ({ children }) 
     typography: AppTypography,
     spacing: AppSpacing,
     animations: AppAnimations,
+    borders: AppBorders,
+    shadows: AppShadows,
     
     // Paper theme
     paperTheme,
@@ -110,4 +114,14 @@ export const useAppSpacing = () => {
 export const useAppAnimations = () => {
   const { animations } = useAppTheme();
   return animations;
+};
+
+export const useAppBorders = () => {
+  const { borders } = useAppTheme();
+  return borders;
+};
+
+export const useAppShadows = () => {
+  const { shadows } = useAppTheme();
+  return shadows;
 };

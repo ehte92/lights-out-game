@@ -112,13 +112,8 @@ const createStyles = (colors: any) => StyleSheet.create({
   continueButton: {
     width: '100%',
     height: 72,
-    borderRadius: 36,
-    // Sophisticated dark shadow for continue button
-    shadowColor: colors.primary,
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.2, // Subtle shadow for dark theme
-    shadowRadius: 16,
-    elevation: 12,
+    borderRadius: 0, // Sharp corners for neobrutalism
+    // All shadows handled by PremiumButton component
   },
   continueButtonText: {
     fontSize: 24,
@@ -130,25 +125,19 @@ const createStyles = (colors: any) => StyleSheet.create({
   },
   newGameButton: {
     height: 48,
-    borderRadius: 24,
-    backgroundColor: 'transparent', // Pure transparent for clean outline
-    // Border will be handled by PremiumButton's getBorderStyle
+    borderRadius: 0, // Sharp corners for neobrutalism
+    // Border and background handled by PremiumButton's getBorderStyle
   },
   newGameButtonText: {
     fontSize: 16,
-    fontWeight: '700',
-    // Opacity handled by getTextColor in PremiumButton
+    fontWeight: '900', // Bold neobrutalist typography
+    // Color handled by getTextColor in PremiumButton
   },
   playButton: {
     width: '100%',
     height: 72,
-    borderRadius: 36,
-    // Enhanced shadow for primary play button
-    shadowColor: colors.primary,
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.3,
-    shadowRadius: 20,
-    elevation: 16,
+    borderRadius: 0, // Sharp corners for neobrutalism
+    // All shadows handled by PremiumButton component
   },
   playButtonText: {
     fontSize: 24,

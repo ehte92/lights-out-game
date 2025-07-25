@@ -8,8 +8,7 @@ import Animated, {
   interpolateColor,
   runOnJS,
 } from 'react-native-reanimated';
-import { LinearGradient } from 'expo-linear-gradient';
-import { useGameTheme } from '../../contexts/GameThemeContext';
+import { useAppTheme, useAppBorders } from '../../contexts/AppThemeContext';
 
 interface GameCellProps {
   isOn: boolean;
@@ -30,55 +29,48 @@ export const GameCell: React.FC<GameCellProps> = React.memo(({
   onPress,
   disabled = false,
 }) => {
-  const { gameColors, animations, effects } = useGameTheme();
+  const { colors } = useAppTheme();
+  const borders = useAppBorders();
   const scale = useSharedValue(1);
-  const rotation = useSharedValue(0);
-  const opacity = useSharedValue(1);
+  const pressed = useSharedValue(false);
 
   const handlePress = useCallback(() => {
     if (disabled) return;
 
-    // Use theme-based animation settings
-    const pressScale = animations.cellHoverScale * 0.9; // Slightly smaller for press
-    const duration = animations.cellToggleDuration / 2; // Half duration for press
-    
-    // Trigger press animation
+    // Neobrutalist press animation - sharp and abrupt
     scale.value = withSequence(
-      withSpring(pressScale, { duration }),
-      withSpring(1, { duration: duration * 1.5 })
+      withSpring(0.9, { duration: 100 }), // Quick press down
+      withSpring(1, { duration: 100 })    // Quick release
     );
-
-    if (animations.pressEffect) {
-      rotation.value = withSequence(
-        withSpring(3, { duration }),
-        withSpring(0, { duration: duration * 1.5 })
-      );
-    }
 
     // Trigger the callback
     runOnJS(onPress)(row, col);
-  }, [disabled, scale, rotation, onPress, row, col, animations]);
+  }, [disabled, scale, onPress, row, col]);
+
+  const handlePressIn = useCallback(() => {
+    pressed.value = true;
+  }, [pressed]);
+
+  const handlePressOut = useCallback(() => {
+    pressed.value = false;
+  }, [pressed]);
 
   const animatedStyle = useAnimatedStyle(() => {
-    const backgroundColor = interpolateColor(
-      opacity.value,
-      [0, 1],
-      isOn ? [gameColors.cellOff, gameColors.cellOn] : [gameColors.cellOn, gameColors.cellOff]
-    );
-
+    // Neobrutalist cell colors - neon green when on, white when off
+    const backgroundColor = isOn ? colors.cellOn : colors.cellOff;
+    
     return {
       transform: [
         { scale: scale.value },
-        { rotate: `${rotation.value}deg` },
+        // Add slight press translation for neobrutalist effect
+        { translateX: pressed.value ? 1 : 0 },
+        { translateY: pressed.value ? 1 : 0 },
       ],
       backgroundColor,
+      borderWidth: borders.medium, // Thick black border
+      borderColor: borders.color,   // Pure black
     };
   });
-
-  // Create gradient colors based on theme
-  const gradientColors = isOn 
-    ? [gameColors.cellOn, gameColors.cellOn + 'CC', gameColors.cellOn + '99'] // On state with transparency
-    : [gameColors.cellOff, gameColors.cellOff + 'CC', gameColors.cellOff + '99']; // Off state with transparency
 
   return (
     <AnimatedPressable
@@ -92,28 +84,10 @@ export const GameCell: React.FC<GameCellProps> = React.memo(({
         animatedStyle,
       ]}
       onPress={handlePress}
+      onPressIn={handlePressIn}
+      onPressOut={handlePressOut}
       disabled={disabled}
-    >
-      <LinearGradient
-        colors={gradientColors}
-        style={styles.gradient}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-      >
-        <Animated.View style={[
-          styles.innerCell,
-          {
-            backgroundColor: isOn ? gameColors.cellOn : gameColors.cellOff,
-            borderColor: gameColors.cellBorder,
-            shadowColor: gameColors.cellShadow,
-            shadowOpacity: isOn ? (effects?.glowEffect ? 0.8 : 0.4) : 0.2,
-            shadowOffset: { width: 0, height: isOn ? 4 : 2 },
-            shadowRadius: isOn ? (effects?.glowEffect ? 12 : 6) : 3,
-            elevation: isOn ? 8 : 3,
-          }
-        ]} />
-      </LinearGradient>
-    </AnimatedPressable>
+    />
   );
 });
 
@@ -121,18 +95,8 @@ GameCell.displayName = 'GameCell';
 
 const styles = StyleSheet.create({
   cell: {
-    borderRadius: 12,
+    borderRadius: 0, // Sharp corners for neobrutalism
     margin: 4,
-    overflow: 'hidden',
-  },
-  gradient: {
-    flex: 1,
-    borderRadius: 12,
-    padding: 2,
-  },
-  innerCell: {
-    flex: 1,
-    borderRadius: 10,
-    borderWidth: 2,
+    // No overflow hidden - let sharp edges show
   },
 });

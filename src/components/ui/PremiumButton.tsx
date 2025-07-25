@@ -1,5 +1,5 @@
 import React from 'react';
-import { Pressable, StyleSheet, ViewStyle, TextStyle } from 'react-native';
+import { Pressable, StyleSheet, ViewStyle, TextStyle, Platform } from 'react-native';
 import { Text } from 'react-native-paper';
 import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';
@@ -10,7 +10,7 @@ import Animated, {
   withTiming,
   interpolate,
 } from 'react-native-reanimated';
-import { useAppTheme } from '../../contexts/AppThemeContext';
+import { useAppTheme, useAppBorders, useAppShadows } from '../../contexts/AppThemeContext';
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
@@ -34,75 +34,63 @@ export const PremiumButton: React.FC<PremiumButtonProps> = ({
   textStyle,
 }) => {
   const { colors, paperTheme } = useAppTheme();
+  const borders = useAppBorders();
+  const shadows = useAppShadows();
   
-  const scale = useSharedValue(1);
-  const shadowOpacity = useSharedValue(0.4);
-  const glowIntensity = useSharedValue(0.6);
+  // Neobrutalist animations - sharp, abrupt, no smoothing
+  const pressed = useSharedValue(false);
   
   const handlePressIn = () => {
-    scale.value = withSpring(0.96, { damping: 15, stiffness: 300 });
-    shadowOpacity.value = withTiming(0.2, { duration: 150 });
-    glowIntensity.value = withTiming(0.9, { duration: 150 });
+    pressed.value = true;
   };
   
   const handlePressOut = () => {
-    scale.value = withSpring(1, { damping: 15, stiffness: 300 });
-    shadowOpacity.value = withTiming(0.4, { duration: 300 });
-    glowIntensity.value = withTiming(0.6, { duration: 300 });
+    pressed.value = false;
   };
   
-  const animatedStyle = useAnimatedStyle(() => {
-    const shadowRadius = interpolate(scale.value, [0.96, 1], [20, 32]);
-    const elevation = interpolate(scale.value, [0.96, 1], [8, 16]);
-    
-    return {
-      transform: [{ scale: scale.value }],
-      shadowOpacity: shadowOpacity.value,
-      shadowRadius,
-      elevation,
-    };
-  });
-  
-  const glowAnimatedStyle = useAnimatedStyle(() => ({
-    opacity: glowIntensity.value,
+  // Sharp animation style - no smooth transitions
+  const animatedStyle = useAnimatedStyle(() => ({
+    transform: [
+      { translateX: pressed.value ? 2 : 0 }, // Sharp offset when pressed
+      { translateY: pressed.value ? 2 : 0 }, // Separate transform objects
+    ],
   }));
 
-  const getGradientColors = () => {
+  const getBackgroundColor = () => {
     switch (variant) {
       case 'primary':
-        return [
-          colors.primary || paperTheme.colors.primary,
-          colors.secondary || paperTheme.colors.secondary,
-          colors.accent || paperTheme.colors.tertiary,
-        ];
+        return colors.primary;      // Electric blue
       case 'continue':
-        return [
-          colors.surface,         // Dark slate base
-          colors.surfaceVariant,  // Slightly lighter slate
-          colors.surface,         // Back to dark slate for depth
-        ];
+        return colors.secondary;    // Hot pink
       case 'secondary':
-        return [
-          'transparent',
-          'transparent',
-        ];
+        return colors.background;   // White with border
       default:
-        return ['transparent', 'transparent'];
+        return colors.background;
     }
   };
 
   const getTextColor = () => {
     switch (variant) {
       case 'primary':
-        return '#FFFFFF';
+        return '#FFFFFF';           // White text on blue
       case 'continue':
-        return colors.onSurface; // Light gray for contrast on dark slate
+        return '#FFFFFF';           // White text on pink
       case 'secondary':
-        return colors.onSurfaceVariant; // Medium gray for outline button
+        return colors.onBackground; // Black text on white
       default:
-        return paperTheme.colors.primary;
+        return colors.onBackground;
     }
   };
+
+  const getBorderStyle = () => {
+    const borderWidth = size === 'large' ? borders.thick : borders.medium;
+    return {
+      borderWidth,
+      borderColor: borders.color,
+      borderStyle: borders.style,
+    };
+  };
+
 
   const getSizeStyles = () => {
     switch (size) {
@@ -110,19 +98,19 @@ export const PremiumButton: React.FC<PremiumButtonProps> = ({
         return {
           height: 64,
           paddingHorizontal: 48,
-          borderRadius: 32,
+          borderRadius: 0, // No rounded corners in neobrutalism
         };
       case 'medium':
         return {
           height: 52,
           paddingHorizontal: 32,
-          borderRadius: 26,
+          borderRadius: 0,
         };
       default:
         return {
           height: 44,
           paddingHorizontal: 24,
-          borderRadius: 22,
+          borderRadius: 0,
         };
     }
   };
@@ -138,33 +126,46 @@ export const PremiumButton: React.FC<PremiumButtonProps> = ({
     }
   };
 
-  const getBorderStyle = () => {
-    switch (variant) {
-      case 'continue':
-        return {
-          borderWidth: 1,
-          borderColor: `${colors.primary}30`, // Subtle indigo border
-        };
-      case 'secondary':
-        return {
-          borderWidth: 1.5,
-          borderColor: `${colors.primary}60`, // More visible indigo border
-        };
-      default:
-        return {};
+
+  const shadowStyle = useAnimatedStyle(() => {
+    if (pressed.value) {
+      return Platform.OS === 'android' 
+        ? { elevation: 0 } 
+        : { shadowOpacity: 0 };
     }
-  };
+    
+    const shadowConfig = size === 'large' ? shadows.large : 
+                        size === 'medium' ? shadows.medium : shadows.small;
+    
+    // Android uses elevation only, iOS uses shadow properties
+    if (Platform.OS === 'android') {
+      return {
+        elevation: shadowConfig.elevation,
+      };
+    } else {
+      return {
+        shadowColor: shadowConfig.shadowColor,
+        shadowOffset: shadowConfig.shadowOffset,
+        shadowOpacity: shadowConfig.shadowOpacity,
+        shadowRadius: shadowConfig.shadowRadius,
+      };
+    }
+  });
 
   const sizeStyles = getSizeStyles();
   const borderStyles = getBorderStyle();
+  const backgroundColor = getBackgroundColor();
 
+  // Original neobrutalist design - iOS shadows, flat Android
   return (
     <AnimatedPressable
       style={[
         styles.container,
         sizeStyles,
         borderStyles,
+        shadowStyle,
         animatedStyle,
+        { backgroundColor },
         style,
         disabled && styles.disabled,
       ]}
@@ -173,65 +174,13 @@ export const PremiumButton: React.FC<PremiumButtonProps> = ({
       onPressOut={handlePressOut}
       disabled={disabled}
     >
-      {/* Glow Effect Background */}
-      {(variant === 'primary' || variant === 'continue') && (
-        <Animated.View
-          style={[
-            StyleSheet.absoluteFillObject,
-            styles.glowContainer,
-            glowAnimatedStyle,
-          ]}
-        >
-          <LinearGradient
-            colors={[
-              variant === 'continue' 
-                ? `${colors.primary}20`  // Very subtle indigo glow
-                : `${colors.primary || paperTheme.colors.primary}40`,
-              variant === 'continue' 
-                ? `${colors.primary}10`  // Even more subtle
-                : `${colors.primary || paperTheme.colors.primary}20`,
-              'transparent',
-            ]}
-            style={[StyleSheet.absoluteFillObject, { borderRadius: sizeStyles.borderRadius + 8 }]}
-          />
-        </Animated.View>
-      )}
-      
-      {/* Main Button Background */}
-      <LinearGradient
-        colors={getGradientColors()}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-        style={StyleSheet.absoluteFillObject}
-      />
-      
-      {/* Glass Effect Overlay */}
-      {(variant === 'primary' || variant === 'continue') && (
-        <BlurView
-          intensity={20}
-          style={[StyleSheet.absoluteFillObject, { borderRadius: sizeStyles.borderRadius }]}
-          tint={paperTheme.dark ? 'dark' : 'light'}
-        />
-      )}
-      
-      {/* Border Gradient */}
-      <LinearGradient
-        colors={[
-          'rgba(255, 255, 255, 0.2)',
-          'rgba(255, 255, 255, 0.1)',
-          'rgba(255, 255, 255, 0.05)',
-        ]}
-        style={[StyleSheet.absoluteFillObject, styles.border]}
-      />
-      
-      {/* Button Text */}
       <Text
         style={[
           styles.text,
           {
             color: getTextColor(),
             fontSize: getFontSize(),
-            fontWeight: size === 'large' ? '800' : '700',
+            fontWeight: '900',
           },
           textStyle,
         ]}
@@ -246,23 +195,11 @@ const styles = StyleSheet.create({
   container: {
     justifyContent: 'center',
     alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.4,
-    shadowRadius: 32,
-    elevation: 16,
-    overflow: 'hidden',
-  },
-  glowContainer: {
-    transform: [{ scale: 1.2 }],
-  },
-  border: {
-    borderWidth: 1,
-    borderColor: 'transparent',
+    // No overflow hidden - let sharp edges show
   },
   text: {
-    letterSpacing: -0.5,
     textAlign: 'center',
+    letterSpacing: 0, // No fancy letter spacing
   },
   disabled: {
     opacity: 0.5,
