@@ -18,6 +18,7 @@ import {
   updateLastPlayed
 } from '../utils/storage';
 import { GameHaptics } from '../utils/haptics';
+import { GameAudio } from '../utils/audioManager';
 
 interface GameStore {
   // Game state
@@ -147,11 +148,13 @@ export const useGameStore = create<GameStore>((set, get) => ({
       showVictory: gameComplete,
     });
 
-    // Haptic feedback
+    // Haptic and audio feedback
     if (gameComplete) {
       await GameHaptics.victorySequence();
+      await GameAudio.playVictory();
     } else {
       await GameHaptics.cellTap();
+      await GameAudio.playCellTap();
     }
 
     // Update statistics if game is complete
@@ -281,11 +284,19 @@ export const useGameStore = create<GameStore>((set, get) => ({
     
     await saveSettings(newSettings);
     set({ settings: updatedSettings });
+    
+    // Sync sound enabled state with audio manager
+    if ('soundEnabled' in newSettings) {
+      GameAudio.setEnabled(newSettings.soundEnabled!);
+    }
   },
 
   loadSettings: async () => {
     const settings = await getSettings();
     set({ settings });
+    
+    // Sync sound enabled state with audio manager
+    GameAudio.setEnabled(settings.soundEnabled);
   },
 
   // Statistics actions

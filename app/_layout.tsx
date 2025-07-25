@@ -3,12 +3,28 @@ import { useFonts } from 'expo-font';
 import { Stack } from 'expo-router';
 import 'react-native-reanimated';
 import { PaperProvider } from 'react-native-paper';
+import { useEffect } from 'react';
 
 import { AppThemeProvider, useAppTheme } from '@/src/contexts/AppThemeContext';
+import { GameAudio } from '@/src/utils/audioManager';
 
 // Root layout component that needs to bootstrap theme system
 function RootLayoutContent() {
   const { paperTheme, isDark } = useAppTheme();
+  
+  // Initialize audio system when app starts
+  useEffect(() => {
+    GameAudio.initialize().catch((error) => {
+      console.error('Failed to initialize audio system:', error);
+    });
+
+    return () => {
+      // Cleanup audio when app is destroyed
+      GameAudio.cleanup().catch((error) => {
+        console.error('Failed to cleanup audio system:', error);
+      });
+    };
+  }, []);
   
   // Get the appropriate navigation theme based on app theme
   const navigationTheme = isDark ? DarkTheme : DefaultTheme;
