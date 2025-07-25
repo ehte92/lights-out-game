@@ -5,10 +5,11 @@ import {
   SafeAreaView,
   StatusBar,
   Dimensions,
+  Text,
+  Pressable,
+  Platform,
 } from 'react-native';
-import {
-  IconButton,
-} from 'react-native-paper';
+import { MaterialIcons } from '@expo/vector-icons';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -18,17 +19,19 @@ import Animated, {
   interpolate,
 } from 'react-native-reanimated';
 import { useRouter } from 'expo-router';
-import { useAppTheme } from '../contexts/AppThemeContext';
+import { useAppTheme, useAppTypography, useAppBorders, useAppShadows } from '../contexts/AppThemeContext';
 import { useGameStore } from '../stores/gameStore';
 import { PremiumLogo } from '../components/ui/PremiumLogo';
 import { SmartPlayButton } from '../components/ui/SmartPlayButton';
-import { GradientText } from '../components/ui/GradientText';
 import { AppAtmosphericBackground } from '../components/ui/AppAtmosphericBackground';
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 
 export const MainMenuScreen: React.FC = () => {
   const { colors, paperTheme } = useAppTheme();
+  const typography = useAppTypography();
+  const borders = useAppBorders();
+  const shadows = useAppShadows();
   const { currentGame, startNewGame } = useGameStore();
   const router = useRouter();
 
@@ -40,6 +43,7 @@ export const MainMenuScreen: React.FC = () => {
   const buttonScale = useSharedValue(0.9);
   const buttonOpacity = useSharedValue(0);
   const settingsOpacity = useSharedValue(0);
+  const settingsPressed = useSharedValue(false);
 
   useEffect(() => {
     // Sophisticated entrance sequence
@@ -78,6 +82,10 @@ export const MainMenuScreen: React.FC = () => {
 
   const settingsAnimatedStyle = useAnimatedStyle(() => ({
     opacity: settingsOpacity.value,
+    transform: [
+      { translateX: settingsPressed.value ? 2 : 0 },
+      { translateY: settingsPressed.value ? 2 : 0 },
+    ],
   }));
 
   const handleContinue = () => {
@@ -102,15 +110,31 @@ export const MainMenuScreen: React.FC = () => {
       />
       <SafeAreaView style={styles.safeArea}>
         
-        {/* Minimalist Settings Button */}
+        {/* Neobrutalist Settings Button */}
         <Animated.View style={[styles.settingsContainer, settingsAnimatedStyle]}>
-          <IconButton 
-            icon="cog" 
-            size={24}
-            iconColor={paperTheme.colors.onSurface}
+          <Pressable
+            style={[
+              styles.settingsButton,
+              {
+                backgroundColor: colors.background,
+                borderWidth: borders.thick,
+                borderColor: borders.color,
+                ...Platform.select({
+                  ios: shadows.medium,
+                  android: { elevation: shadows.medium.elevation },
+                }),
+              }
+            ]}
             onPress={handleSettings}
-            style={styles.settingsButton}
-          />
+            onPressIn={() => { settingsPressed.value = true; }}
+            onPressOut={() => { settingsPressed.value = false; }}
+          >
+            <MaterialIcons 
+              name="settings" 
+              size={24} 
+              color={colors.onBackground}
+            />
+          </Pressable>
         </Animated.View>
 
         {/* Hero Brand Section */}
@@ -120,18 +144,12 @@ export const MainMenuScreen: React.FC = () => {
           </Animated.View>
           
           <Animated.View style={[styles.titleContainer, titleAnimatedStyle]}>
-            <GradientText style={styles.appTitle}>
+            <Text style={[styles.appTitle, typography.displayLarge, { color: colors.onBackground }]}>
               Lights Out
-            </GradientText>
-            <GradientText 
-              style={styles.tagline}
-              colors={[
-                `${paperTheme.colors.onSurface}80`,
-                `${paperTheme.colors.onSurface}60`,
-              ]}
-            >
+            </Text>
+            <Text style={[styles.tagline, typography.titleLarge, { color: colors.onBackground }]}>
               The Classic Puzzle Challenge
-            </GradientText>
+            </Text>
           </Animated.View>
         </View>
 
@@ -158,13 +176,17 @@ const styles = StyleSheet.create({
   },
   settingsContainer: {
     position: 'absolute',
-    top: 16,
-    right: 16,
+    top: 60, // Increased spacing from status bar
+    right: 20,
     zIndex: 10,
   },
   settingsButton: {
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
-    borderRadius: 20,
+    width: 48,
+    height: 48,
+    borderRadius: 0, // Sharp corners for neobrutalism
+    justifyContent: 'center',
+    alignItems: 'center',
+    // Background, border, and shadow applied inline
   },
   heroContainer: {
     flex: 1,
@@ -181,19 +203,13 @@ const styles = StyleSheet.create({
     marginBottom: 60,
   },
   appTitle: {
-    fontSize: 56,
-    fontWeight: '900',
     textAlign: 'center',
-    letterSpacing: -2,
     marginBottom: 12,
-    lineHeight: 64,
+    // Typography and color applied inline from AppTypography.displayLarge
   },
   tagline: {
-    fontSize: 18,
-    fontWeight: '600',
     textAlign: 'center',
-    letterSpacing: -0.5,
-    opacity: 0.8,
+    // Typography and color applied inline from AppTypography.titleLarge
   },
   actionContainer: {
     position: 'absolute',
