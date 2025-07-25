@@ -10,7 +10,7 @@ import Animated, {
   useAnimatedProps,
 } from 'react-native-reanimated';
 import Svg, { Circle, Path, Defs, RadialGradient, Stop } from 'react-native-svg';
-import { useGameTheme } from '../../contexts/ThemeContext';
+import { useAppTheme } from '../../contexts/AppThemeContext';
 
 const AnimatedCircle = Animated.createAnimatedComponent(Circle);
 
@@ -20,7 +20,7 @@ interface AppLogoProps {
 }
 
 export const AppLogo: React.FC<AppLogoProps> = ({ size = 80, animated = true }) => {
-  const { colors, paperTheme } = useGameTheme();
+  const { colors, paperTheme } = useAppTheme();
   
   // Animation values
   const glowOpacity = useSharedValue(0.6);

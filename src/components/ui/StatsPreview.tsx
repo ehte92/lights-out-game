@@ -2,10 +2,10 @@ import React from 'react';
 import { View, StyleSheet } from 'react-native';
 import { Surface, Text } from 'react-native-paper';
 import { useGameStore } from '../../stores/gameStore';
-import { useGameTheme } from '../../contexts/ThemeContext';
+import { useAppTheme } from '../../contexts/AppThemeContext';
 
 export const StatsPreview: React.FC = () => {
-  const { colors, paperTheme } = useGameTheme();
+  const { colors, paperTheme } = useAppTheme();
   const { stats } = useGameStore();
   
   if (!stats) return null;

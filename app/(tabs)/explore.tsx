@@ -3,16 +3,17 @@ import { Surface, Text } from 'react-native-paper';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { ThemeSelector } from '@/src/components/themes/ThemeSelector';
-import { useGameTheme } from '@/src/contexts/ThemeContext';
+import { useAppTheme } from '@/src/contexts/AppThemeContext';
+import { GameThemeProvider } from '@/src/contexts/GameThemeContext';
 
 export default function TabTwoScreen() {
-  const { colors, paperTheme } = useGameTheme();
+  const { colors, paperTheme } = useAppTheme();
   
   return (
-    <Surface style={[styles.container, { backgroundColor: colors.gameBackground }]}>
+    <Surface style={[styles.container, { backgroundColor: colors.background }]}>
       <SafeAreaView style={styles.safeArea}>
         <ScrollView contentContainerStyle={styles.scrollContent}>
-          <Surface style={[styles.header, { backgroundColor: colors.panelBackground }]} elevation={1}>
+          <Surface style={[styles.header, { backgroundColor: colors.surface }]} elevation={1}>
             <Text variant="displaySmall" style={[styles.title, { color: paperTheme.colors.onSurface }]}>
               Settings & Themes
             </Text>
@@ -21,9 +22,11 @@ export default function TabTwoScreen() {
             </Text>
           </Surface>
           
-          <ThemeSelector />
+          <GameThemeProvider>
+            <ThemeSelector />
+          </GameThemeProvider>
           
-          <Surface style={[styles.infoPanel, { backgroundColor: colors.panelBackground }]} elevation={1}>
+          <Surface style={[styles.infoPanel, { backgroundColor: colors.surface }]} elevation={1}>
             <Text variant="titleMedium" style={[styles.infoTitle, { color: paperTheme.colors.onSurface }]}>
               About Lights Out
             </Text>

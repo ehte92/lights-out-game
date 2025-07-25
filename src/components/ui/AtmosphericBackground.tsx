@@ -9,7 +9,7 @@ import Animated, {
   withSequence,
   interpolate,
 } from 'react-native-reanimated';
-import { useGameTheme } from '../../contexts/ThemeContext';
+import { useAppTheme } from '../../contexts/AppThemeContext';
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 
@@ -27,7 +27,7 @@ interface AtmosphericBackgroundProps {
 }
 
 export const AtmosphericBackground: React.FC<AtmosphericBackgroundProps> = ({ children }) => {
-  const { colors, paperTheme, currentTheme } = useGameTheme();
+  const { colors, paperTheme } = useAppTheme();
   
   // Create floating particles based on theme
   const particles: FloatingParticle[] = React.useMemo(() => {
@@ -43,9 +43,15 @@ export const AtmosphericBackground: React.FC<AtmosphericBackgroundProps> = ({ ch
   }, []);
 
   const getThemeGradients = () => {
-    const themeId = currentTheme?.id || 'classic';
+    const themeId = 'serene'; // Fixed to app theme
     
     switch (themeId) {
+      case 'serene':
+        return {
+          primary: ['#f8fafc', '#e2e8f0', '#cbd5e1', '#94a3b8'],
+          secondary: ['#6366f1', '#8b5cf6', '#06b6d4'],
+          particle: '#6366f1',
+        };
       case 'neon':
         return {
           primary: ['#0f0f23', '#1a1a2e', '#16213e', '#0f3460'],
@@ -76,11 +82,17 @@ export const AtmosphericBackground: React.FC<AtmosphericBackgroundProps> = ({ ch
           secondary: ['#6c757d', '#495057', '#343a40'],
           particle: '#6c757d',
         };
-      default: // classic
+      case 'classic':
         return {
           primary: ['#667eea', '#764ba2', '#f093fb', '#f5576c'],
           secondary: ['#ffecd2', '#fcb69f', '#667eea'],
           particle: '#667eea',
+        };
+      default: // serene fallback
+        return {
+          primary: ['#f8fafc', '#e2e8f0', '#cbd5e1', '#94a3b8'],
+          secondary: ['#6366f1', '#8b5cf6', '#06b6d4'],
+          particle: '#6366f1',
         };
     }
   };

@@ -18,17 +18,17 @@ import Animated, {
   interpolate,
 } from 'react-native-reanimated';
 import { useRouter } from 'expo-router';
-import { useGameTheme } from '../contexts/ThemeContext';
+import { useAppTheme } from '../contexts/AppThemeContext';
 import { useGameStore } from '../stores/gameStore';
 import { PremiumLogo } from '../components/ui/PremiumLogo';
 import { SmartPlayButton } from '../components/ui/SmartPlayButton';
 import { GradientText } from '../components/ui/GradientText';
-import { AtmosphericBackground } from '../components/ui/AtmosphericBackground';
+import { AppAtmosphericBackground } from '../components/ui/AppAtmosphericBackground';
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 
 export const MainMenuScreen: React.FC = () => {
-  const { colors, paperTheme } = useGameTheme();
+  const { colors, paperTheme } = useAppTheme();
   const { currentGame, startNewGame } = useGameStore();
   const router = useRouter();
 
@@ -94,7 +94,7 @@ export const MainMenuScreen: React.FC = () => {
   };
 
   return (
-    <AtmosphericBackground>
+    <AppAtmosphericBackground>
       <StatusBar 
         barStyle={paperTheme.dark ? 'light-content' : 'dark-content'} 
         translucent={true}
@@ -148,7 +148,7 @@ export const MainMenuScreen: React.FC = () => {
         </View>
 
       </SafeAreaView>
-    </AtmosphericBackground>
+    </AppAtmosphericBackground>
   );
 };
 

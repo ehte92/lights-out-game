@@ -10,7 +10,7 @@ import Animated, {
   interpolate,
 } from 'react-native-reanimated';
 import Svg, { Path, Circle, Defs, RadialGradient, Stop } from 'react-native-svg';
-import { useGameTheme } from '../../contexts/ThemeContext';
+import { useAppTheme } from '../../contexts/AppThemeContext';
 
 interface PremiumLogoProps {
   size?: number;
@@ -21,7 +21,7 @@ export const PremiumLogo: React.FC<PremiumLogoProps> = ({
   size = 120, 
   animated = true 
 }) => {
-  const { colors, paperTheme } = useGameTheme();
+  const { colors, paperTheme } = useAppTheme();
   
   // Animation values
   const pulse = useSharedValue(1);
@@ -70,9 +70,9 @@ export const PremiumLogo: React.FC<PremiumLogoProps> = ({
     opacity: glowOpacity.value,
   }));
 
-  const primaryColor = colors.accent || paperTheme.colors.primary;
-  const secondaryColor = colors.cellOn || paperTheme.colors.secondary;
-  const glowColor = colors.accent || paperTheme.colors.tertiary;
+  const primaryColor = colors.primary;
+  const secondaryColor = colors.secondary;
+  const glowColor = colors.accent;
 
   return (
     <View style={[styles.container, { width: size, height: size }]}>

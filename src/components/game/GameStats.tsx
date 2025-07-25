@@ -7,7 +7,8 @@ import Animated, {
   withSpring,
 } from 'react-native-reanimated';
 import { GameState } from '../../types/game';
-import { useGameTheme } from '../../contexts/ThemeContext';
+import { useGameTheme } from '../../contexts/GameThemeContext';
+import { useAppTheme } from '../../contexts/AppThemeContext';
 
 interface GameStatsProps {
   gameState: GameState | null;
@@ -18,7 +19,8 @@ export const GameStats: React.FC<GameStatsProps> = React.memo(({
   gameState,
   isPlaying,
 }) => {
-  const { colors, paperTheme } = useGameTheme();
+  const { gameColors } = useGameTheme();
+  const { colors: appColors, paperTheme } = useAppTheme();
   const [elapsedTime, setElapsedTime] = useState(0);
   const moveScale = useSharedValue(1);
 
@@ -74,7 +76,7 @@ export const GameStats: React.FC<GameStatsProps> = React.memo(({
   }
 
   return (
-    <Surface style={[styles.container, { backgroundColor: colors.panelBackground }]} elevation={2}>
+    <Surface style={[styles.container, { backgroundColor: gameColors.panelBackground }]} elevation={2}>
       <View style={styles.statItem}>
         <Text variant="labelSmall" style={[styles.statLabel, { color: paperTheme.colors.onSurfaceVariant }]}>
           Moves
@@ -103,7 +105,7 @@ export const GameStats: React.FC<GameStatsProps> = React.memo(({
         <Text variant="labelSmall" style={[styles.statLabel, { color: paperTheme.colors.onSurfaceVariant }]}>
           Difficulty
         </Text>
-        <Text variant="titleMedium" style={[styles.statValue, styles.difficultyText, { color: colors.accent }]}>
+        <Text variant="titleMedium" style={[styles.statValue, styles.difficultyText, { color: gameColors.accent }]}>
           {formattedDifficulty}
         </Text>
       </View>

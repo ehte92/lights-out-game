@@ -7,7 +7,7 @@ import Animated, {
   withSpring,
   withTiming,
 } from 'react-native-reanimated';
-import { useGameTheme } from '../../contexts/ThemeContext';
+import { useAppTheme } from '../../contexts/AppThemeContext';
 
 const AnimatedSurface = Animated.createAnimatedComponent(Surface);
 
@@ -28,7 +28,7 @@ export const MenuCard: React.FC<MenuCardProps> = ({
   variant = 'secondary',
   disabled = false,
 }) => {
-  const { colors, paperTheme } = useGameTheme();
+  const { colors, paperTheme } = useAppTheme();
   
   const scale = useSharedValue(1);
   const elevation = useSharedValue(2);

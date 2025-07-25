@@ -88,7 +88,7 @@ export const classicTheme: GameTheme = {
   name: 'Classic Lights',
   description: 'Modern interpretation of traditional lights with warm, inviting colors',
   unlockLevel: 1,
-  isDefault: true,
+  isDefault: false,
   category: 'classic',
   paperTheme: classicPaperTheme,
   gameColors: classicGameColors,
@@ -365,8 +365,60 @@ export const minimalTheme: GameTheme = {
   },
 };
 
+// 7. Serene Sky Theme (Soothing Default)
+const sereneGameColors: GameColors = {
+  cellOn: '#6366f1',        // Soft Indigo (calming primary)
+  cellOff: '#e2e8f0',       // Cool light gray (gentle contrast)
+  cellBorder: '#cbd5e1',    // Soft gray border
+  cellShadow: '#64748b20',  // Subtle blue-gray shadow
+  gridBackground: '#f8fafc',
+  gameBackground: 'linear-gradient(135deg, #f8fafc, #e2e8f0, #cbd5e1)',
+  panelBackground: 'rgba(248, 250, 252, 0.9)',
+  accent: '#8b5cf6',        // Gentle purple accent
+  textMuted: '#64748b',
+};
+
+const serenePaperTheme = createPaperTheme(
+  MD3LightTheme,
+  '#6366f1',    // primary (soft indigo)
+  '#06b6d4',    // secondary (calm cyan)
+  '#f8fafc',    // surface
+  '#f8fafc',    // background
+  '#1e293b',    // onSurface
+  '#1e293b'     // onBackground
+);
+
+export const sereneTheme: GameTheme = {
+  id: 'serene',
+  name: 'Serene Sky',
+  description: 'Scientifically designed soothing colors for relaxation and focus',
+  unlockLevel: 1,
+  isDefault: true,
+  category: 'calm',
+  paperTheme: serenePaperTheme,
+  gameColors: sereneGameColors,
+  animations: {
+    ...standardAnimations,
+    cellToggleDuration: 350,
+    victoryType: 'cascade',
+    victoryDuration: 800,
+    particleEffect: true,
+  },
+  sounds: {
+    cellToggle: 'cell_toggle_serene.mp3',
+    victory: 'victory_serene.mp3',
+    ambient: 'ambient_calm.mp3',
+    volumeModifier: 0.8,
+  },
+  effects: {
+    glowEffect: true,
+    particleEffect: true,
+  },
+};
+
 // Export all themes
 export const ALL_THEMES: GameTheme[] = [
+  sereneTheme,    // New soothing default
   classicTheme,
   neonTheme,
   natureTheme,
@@ -383,6 +435,7 @@ export const THEMES_BY_ID = ALL_THEMES.reduce((acc, theme) => {
 
 // Theme unlock requirements
 export const THEME_UNLOCK_REQUIREMENTS = {
+  'serene': { level: 1, always: true },    // New soothing default
   'classic': { level: 1, always: true },
   'neon': { level: 6, achievements: ['first_medium'] },
   'nature': { level: 10, achievements: ['streak_5'] },

@@ -1,14 +1,10 @@
 import React, { createContext, useContext, useEffect } from 'react';
-import { StatusBar } from 'expo-status-bar';
-import { useTheme as usePaperTheme } from 'react-native-paper';
-import type { MD3Theme } from 'react-native-paper';
 import { useThemeStore, useCurrentTheme } from '../stores/themeStore';
 import type { GameTheme } from '../themes/types';
 
-interface ThemeContextValue {
-  // Current theme data
+interface GameThemeContextValue {
+  // Current game theme data
   currentTheme: GameTheme;
-  paperTheme: MD3Theme;
   
   // Theme actions
   setTheme: (themeId: string) => void;
@@ -20,16 +16,16 @@ interface ThemeContextValue {
   availableThemes: GameTheme[];
   unlockedThemes: string[];
   
-  // Convenience getters
-  colors: GameTheme['gameColors'];
+  // Game-specific getters (only affects game screen)
+  gameColors: GameTheme['gameColors'];
   animations: GameTheme['animations'];
   effects: GameTheme['effects'];
 }
 
-const ThemeContext = createContext<ThemeContextValue | null>(null);
+const GameThemeContext = createContext<GameThemeContextValue | null>(null);
 
 export const useGameTheme = () => {
-  const context = useContext(ThemeContext);
+  const context = useContext(GameThemeContext);
   if (!context) {
     throw new Error('useGameTheme must be used within a GameThemeProvider');
   }
@@ -41,7 +37,6 @@ interface GameThemeProviderProps {
 }
 
 export const GameThemeProvider: React.FC<GameThemeProviderProps> = ({ children }) => {
-  const paperTheme = usePaperTheme();
   const currentTheme = useCurrentTheme();
   
   const {
@@ -63,10 +58,9 @@ export const GameThemeProvider: React.FC<GameThemeProviderProps> = ({ children }
     checkUnlockRequirements(mockPlayerLevel, mockAchievements);
   }, [checkUnlockRequirements]);
 
-  const contextValue: ThemeContextValue = {
-    // Current theme data
+  const contextValue: GameThemeContextValue = {
+    // Current game theme data
     currentTheme,
-    paperTheme,
     
     // Theme actions
     setTheme,
@@ -78,35 +72,31 @@ export const GameThemeProvider: React.FC<GameThemeProviderProps> = ({ children }
     availableThemes,
     unlockedThemes,
     
-    // Convenience getters
-    colors: currentTheme.gameColors,
+    // Game-specific getters (only affects game screen)
+    gameColors: currentTheme.gameColors,
     animations: currentTheme.animations,
     effects: currentTheme.effects || {},
   };
 
   return (
-    <ThemeContext.Provider value={contextValue}>
-      <StatusBar 
-        style={currentTheme.paperTheme.dark ? 'light' : 'dark'}
-        backgroundColor={currentTheme.gameColors.gameBackground}
-      />
+    <GameThemeContext.Provider value={contextValue}>
       {children}
-    </ThemeContext.Provider>
+    </GameThemeContext.Provider>
   );
 };
 
-// Additional hooks for specific theme aspects
-export const useThemeColors = () => {
-  const { colors } = useGameTheme();
-  return colors;
+// Additional hooks for specific game theme aspects
+export const useGameColors = () => {
+  const { gameColors } = useGameTheme();
+  return gameColors;
 };
 
-export const useThemeAnimations = () => {
+export const useGameAnimations = () => {
   const { animations } = useGameTheme();
   return animations;
 };
 
-export const useThemeEffects = () => {
+export const useGameEffects = () => {
   const { effects } = useGameTheme();
   return effects;
 };

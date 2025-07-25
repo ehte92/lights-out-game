@@ -10,7 +10,7 @@ import Animated, {
   withTiming,
   interpolate,
 } from 'react-native-reanimated';
-import { useGameTheme } from '../../contexts/ThemeContext';
+import { useAppTheme } from '../../contexts/AppThemeContext';
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
@@ -33,7 +33,7 @@ export const PremiumButton: React.FC<PremiumButtonProps> = ({
   style,
   textStyle,
 }) => {
-  const { colors, paperTheme } = useGameTheme();
+  const { colors, paperTheme } = useAppTheme();
   
   const scale = useSharedValue(1);
   const shadowOpacity = useSharedValue(0.4);
@@ -71,20 +71,20 @@ export const PremiumButton: React.FC<PremiumButtonProps> = ({
     switch (variant) {
       case 'primary':
         return [
-          colors.accent || paperTheme.colors.primary,
-          colors.cellOn || paperTheme.colors.secondary,
-          paperTheme.colors.tertiary,
+          colors.primary || paperTheme.colors.primary,
+          colors.secondary || paperTheme.colors.secondary,
+          colors.accent || paperTheme.colors.tertiary,
         ];
       case 'continue':
         return [
-          '#f59e0b', // Warm amber
-          '#f97316', // Orange
-          '#ea580c', // Deep orange
+          colors.surface,         // Dark slate base
+          colors.surfaceVariant,  // Slightly lighter slate
+          colors.surface,         // Back to dark slate for depth
         ];
       case 'secondary':
         return [
-          colors.panelBackground,
-          colors.gameBackground,
+          'transparent',
+          'transparent',
         ];
       default:
         return ['transparent', 'transparent'];
@@ -94,10 +94,11 @@ export const PremiumButton: React.FC<PremiumButtonProps> = ({
   const getTextColor = () => {
     switch (variant) {
       case 'primary':
-      case 'continue':
         return '#FFFFFF';
+      case 'continue':
+        return colors.onSurface; // Light gray for contrast on dark slate
       case 'secondary':
-        return paperTheme.colors.onSurface;
+        return colors.onSurfaceVariant; // Medium gray for outline button
       default:
         return paperTheme.colors.primary;
     }
@@ -137,13 +138,32 @@ export const PremiumButton: React.FC<PremiumButtonProps> = ({
     }
   };
 
+  const getBorderStyle = () => {
+    switch (variant) {
+      case 'continue':
+        return {
+          borderWidth: 1,
+          borderColor: `${colors.primary}30`, // Subtle indigo border
+        };
+      case 'secondary':
+        return {
+          borderWidth: 1.5,
+          borderColor: `${colors.primary}60`, // More visible indigo border
+        };
+      default:
+        return {};
+    }
+  };
+
   const sizeStyles = getSizeStyles();
+  const borderStyles = getBorderStyle();
 
   return (
     <AnimatedPressable
       style={[
         styles.container,
         sizeStyles,
+        borderStyles,
         animatedStyle,
         style,
         disabled && styles.disabled,
@@ -165,11 +185,11 @@ export const PremiumButton: React.FC<PremiumButtonProps> = ({
           <LinearGradient
             colors={[
               variant === 'continue' 
-                ? '#f59e0b40'
-                : `${colors.accent || paperTheme.colors.primary}40`,
+                ? `${colors.primary}20`  // Very subtle indigo glow
+                : `${colors.primary || paperTheme.colors.primary}40`,
               variant === 'continue' 
-                ? '#f59e0b20'
-                : `${colors.accent || paperTheme.colors.primary}20`,
+                ? `${colors.primary}10`  // Even more subtle
+                : `${colors.primary || paperTheme.colors.primary}20`,
               'transparent',
             ]}
             style={[StyleSheet.absoluteFillObject, { borderRadius: sizeStyles.borderRadius + 8 }]}

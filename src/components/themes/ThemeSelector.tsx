@@ -7,7 +7,8 @@ import {
   Card,
   Chip,
 } from 'react-native-paper';
-import { useGameTheme } from '../../contexts/ThemeContext';
+import { useGameTheme } from '../../contexts/GameThemeContext';
+import { useAppTheme } from '../../contexts/AppThemeContext';
 import { ALL_THEMES } from '../../themes/gameThemes';
 
 export const ThemeSelector: React.FC = () => {
@@ -16,9 +17,10 @@ export const ThemeSelector: React.FC = () => {
     setTheme, 
     isThemeUnlocked, 
     unlockedThemes,
-    paperTheme,
     isTransitioning 
   } = useGameTheme();
+  
+  const { paperTheme } = useAppTheme();
 
   const handleThemeSelect = (themeId: string) => {
     if (isThemeUnlocked(themeId) && !isTransitioning) {

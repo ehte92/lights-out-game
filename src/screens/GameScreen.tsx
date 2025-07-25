@@ -29,10 +29,11 @@ import { useGameStore } from '../stores/gameStore';
 import { GameGrid } from '../components/game/GameGrid';
 import { GameStats } from '../components/game/GameStats';
 import { DevPanel } from '../components/development/DevPanel';
-import { useGameTheme } from '../contexts/ThemeContext';
+import { useAppTheme } from '../contexts/AppThemeContext';
+import { GameThemeProvider } from '../contexts/GameThemeContext';
 
 export const GameScreen: React.FC = () => {
-  const { colors, paperTheme } = useGameTheme();
+  const { colors, paperTheme } = useAppTheme();
   const router = useRouter();
   const {
     currentGame,
@@ -162,7 +163,7 @@ export const GameScreen: React.FC = () => {
 
   return (
     <LinearGradient
-      colors={[colors.gameBackground, colors.panelBackground]}
+      colors={[colors.background, colors.surface]}
       style={styles.container}
     >
       <StatusBar 
@@ -172,7 +173,7 @@ export const GameScreen: React.FC = () => {
       />
       <SafeAreaView style={styles.safeArea}>
         {/* Header */}
-        <Surface style={[styles.header, { backgroundColor: colors.panelBackground }]} elevation={1}>
+        <Surface style={[styles.header, { backgroundColor: colors.surface }]} elevation={1}>
           <View style={styles.headerContent}>
             <IconButton 
               icon="arrow-left" 
@@ -192,29 +193,31 @@ export const GameScreen: React.FC = () => {
           </View>
         </Surface>
 
-        {/* Game Stats */}
-        <GameStats gameState={currentGame} isPlaying={isPlaying && !isPaused} />
+        {/* Game Area - Wrapped with GameThemeProvider */}
+        <GameThemeProvider>
+          {/* Game Stats */}
+          <GameStats gameState={currentGame} isPlaying={isPlaying && !isPaused} />
 
-        {/* Game Grid */}
-        <View style={styles.gameContainer}>
-          <GameGrid
-            gameState={currentGame}
-            onCellPress={makeMove}
-            disabled={isPaused}
-          />
-          
-          {/* Pause Overlay */}
-          {isPaused && (
-            <Surface style={styles.pauseOverlay} elevation={5}>
-              <Text variant="headlineLarge" style={{ color: paperTheme.colors.onSurface }}>
-                Game Paused
-              </Text>
-            </Surface>
-          )}
-        </View>
+          {/* Game Grid */}
+          <View style={styles.gameContainer}>
+            <GameGrid
+              gameState={currentGame}
+              onCellPress={makeMove}
+              disabled={isPaused}
+            />
+            
+            {/* Pause Overlay */}
+            {isPaused && (
+              <Surface style={styles.pauseOverlay} elevation={5}>
+                <Text variant="headlineLarge" style={{ color: paperTheme.colors.onSurface }}>
+                  Game Paused
+                </Text>
+              </Surface>
+            )}
+          </View>
 
-        {/* Control Buttons */}
-        <Surface style={[styles.controls, { backgroundColor: colors.panelBackground }]} elevation={2}>
+          {/* Control Buttons */}
+          <Surface style={[styles.controls, { backgroundColor: colors.surface }]} elevation={2}>
           <Button
             mode="contained"
             onPress={handlePause}
@@ -239,6 +242,7 @@ export const GameScreen: React.FC = () => {
             New Game
           </Button>
         </Surface>
+        </GameThemeProvider>
 
         {/* Victory Modal */}
         <Portal>

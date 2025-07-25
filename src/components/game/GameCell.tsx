@@ -9,7 +9,7 @@ import Animated, {
   runOnJS,
 } from 'react-native-reanimated';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useGameTheme } from '../../contexts/ThemeContext';
+import { useGameTheme } from '../../contexts/GameThemeContext';
 
 interface GameCellProps {
   isOn: boolean;
@@ -30,7 +30,7 @@ export const GameCell: React.FC<GameCellProps> = React.memo(({
   onPress,
   disabled = false,
 }) => {
-  const { colors, animations, effects } = useGameTheme();
+  const { gameColors, animations, effects } = useGameTheme();
   const scale = useSharedValue(1);
   const rotation = useSharedValue(0);
   const opacity = useSharedValue(1);
@@ -63,7 +63,7 @@ export const GameCell: React.FC<GameCellProps> = React.memo(({
     const backgroundColor = interpolateColor(
       opacity.value,
       [0, 1],
-      isOn ? [colors.cellOff, colors.cellOn] : [colors.cellOn, colors.cellOff]
+      isOn ? [gameColors.cellOff, gameColors.cellOn] : [gameColors.cellOn, gameColors.cellOff]
     );
 
     return {
@@ -77,8 +77,8 @@ export const GameCell: React.FC<GameCellProps> = React.memo(({
 
   // Create gradient colors based on theme
   const gradientColors = isOn 
-    ? [colors.cellOn, colors.cellOn + 'CC', colors.cellOn + '99'] // On state with transparency
-    : [colors.cellOff, colors.cellOff + 'CC', colors.cellOff + '99']; // Off state with transparency
+    ? [gameColors.cellOn, gameColors.cellOn + 'CC', gameColors.cellOn + '99'] // On state with transparency
+    : [gameColors.cellOff, gameColors.cellOff + 'CC', gameColors.cellOff + '99']; // Off state with transparency
 
   return (
     <AnimatedPressable
@@ -103,9 +103,9 @@ export const GameCell: React.FC<GameCellProps> = React.memo(({
         <Animated.View style={[
           styles.innerCell,
           {
-            backgroundColor: isOn ? colors.cellOn : colors.cellOff,
-            borderColor: colors.cellBorder,
-            shadowColor: colors.cellShadow,
+            backgroundColor: isOn ? gameColors.cellOn : gameColors.cellOff,
+            borderColor: gameColors.cellBorder,
+            shadowColor: gameColors.cellShadow,
             shadowOpacity: isOn ? (effects?.glowEffect ? 0.8 : 0.4) : 0.2,
             shadowOffset: { width: 0, height: isOn ? 4 : 2 },
             shadowRadius: isOn ? (effects?.glowEffect ? 12 : 6) : 3,

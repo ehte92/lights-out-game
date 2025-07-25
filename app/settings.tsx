@@ -5,14 +5,15 @@ import { useRouter } from 'expo-router';
 import { View } from 'react-native';
 
 import { ThemeSelector } from '@/src/components/themes/ThemeSelector';
-import { useGameTheme } from '@/src/contexts/ThemeContext';
+import { useAppTheme } from '@/src/contexts/AppThemeContext';
+import { GameThemeProvider } from '@/src/contexts/GameThemeContext';
 
 export default function SettingsScreen() {
-  const { colors, paperTheme } = useGameTheme();
+  const { colors, paperTheme } = useAppTheme();
   const router = useRouter();
   
   return (
-    <Surface style={[styles.container, { backgroundColor: colors.gameBackground }]}>
+    <Surface style={[styles.container, { backgroundColor: colors.background }]}>
       <StatusBar 
         barStyle={paperTheme.dark ? 'light-content' : 'dark-content'} 
         translucent={true}
@@ -22,7 +23,7 @@ export default function SettingsScreen() {
         <ScrollView contentContainerStyle={styles.scrollContent}>
           
           {/* Header with back button */}
-          <Surface style={[styles.header, { backgroundColor: colors.panelBackground }]} elevation={1}>
+          <Surface style={[styles.header, { backgroundColor: colors.surface }]} elevation={1}>
             <View style={styles.headerContent}>
               <IconButton 
                 icon="arrow-left" 
@@ -42,9 +43,11 @@ export default function SettingsScreen() {
             </View>
           </Surface>
           
-          <ThemeSelector />
+          <GameThemeProvider>
+            <ThemeSelector />
+          </GameThemeProvider>
           
-          <Surface style={[styles.infoPanel, { backgroundColor: colors.panelBackground }]} elevation={1}>
+          <Surface style={[styles.infoPanel, { backgroundColor: colors.surface }]} elevation={1}>
             <Text variant="titleMedium" style={[styles.infoTitle, { color: paperTheme.colors.onSurface }]}>
               About Lights Out
             </Text>

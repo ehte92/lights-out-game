@@ -1,6 +1,5 @@
 import React from 'react';
 import { View, StyleSheet, ViewStyle } from 'react-native';
-import { Text } from 'react-native-paper';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -10,7 +9,7 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 import { PremiumButton } from './PremiumButton';
-import { useGameTheme } from '../../contexts/ThemeContext';
+import { useAppTheme } from '../../contexts/AppThemeContext';
 import { GameState } from '../../types/game';
 
 interface SmartPlayButtonProps {
@@ -26,7 +25,8 @@ export const SmartPlayButton: React.FC<SmartPlayButtonProps> = ({
   onNewGame,
   style,
 }) => {
-  const { paperTheme } = useGameTheme();
+  const { colors } = useAppTheme();
+  const styles = createStyles(colors);
   
   // Determine if there's an active game to continue
   const hasActiveGame = gameState && !gameState.isComplete;
@@ -100,7 +100,7 @@ export const SmartPlayButton: React.FC<SmartPlayButtonProps> = ({
   );
 };
 
-const styles = StyleSheet.create({
+const createStyles = (colors: any) => StyleSheet.create({
   container: {
     width: '100%',
     alignItems: 'center',
@@ -113,12 +113,12 @@ const styles = StyleSheet.create({
     width: '100%',
     height: 72,
     borderRadius: 36,
-    // Continue button gets warmer gradient colors
-    shadowColor: '#f59e0b',
-    shadowOffset: { width: 0, height: 12 },
-    shadowOpacity: 0.3,
-    shadowRadius: 24,
-    elevation: 20,
+    // Sophisticated dark shadow for continue button
+    shadowColor: colors.primary,
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.2, // Subtle shadow for dark theme
+    shadowRadius: 16,
+    elevation: 12,
   },
   continueButtonText: {
     fontSize: 24,
@@ -131,24 +131,24 @@ const styles = StyleSheet.create({
   newGameButton: {
     height: 48,
     borderRadius: 24,
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.2)',
+    backgroundColor: 'transparent', // Pure transparent for clean outline
+    // Border will be handled by PremiumButton's getBorderStyle
   },
   newGameButtonText: {
     fontSize: 16,
     fontWeight: '700',
-    opacity: 0.9,
+    // Opacity handled by getTextColor in PremiumButton
   },
   playButton: {
     width: '100%',
     height: 72,
     borderRadius: 36,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 12 },
-    shadowOpacity: 0.4,
-    shadowRadius: 24,
-    elevation: 20,
+    // Enhanced shadow for primary play button
+    shadowColor: colors.primary,
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.3,
+    shadowRadius: 20,
+    elevation: 16,
   },
   playButtonText: {
     fontSize: 24,

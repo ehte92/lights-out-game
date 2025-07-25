@@ -18,9 +18,9 @@ export const useThemeStore = create<ThemeStore>()(
   persist(
     (set, get) => ({
       // Initial state
-      currentTheme: 'classic',
+      currentTheme: 'serene',
       availableThemes: ALL_THEMES,
-      unlockedThemes: ['classic'], // Classic is always unlocked
+      unlockedThemes: ['serene', 'classic'], // Serene and Classic are always unlocked
       isTransitioning: false,
 
       // Actions
@@ -110,7 +110,7 @@ export const useThemeStore = create<ThemeStore>()(
 
       getCurrentTheme: () => {
         const state = get();
-        return THEMES_BY_ID[state.currentTheme] || THEMES_BY_ID.classic;
+        return THEMES_BY_ID[state.currentTheme] || THEMES_BY_ID.serene;
       },
 
       getAvailableThemes: () => {
