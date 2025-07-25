@@ -18,8 +18,33 @@ function RootLayoutContent() {
     <PaperProvider theme={currentTheme.paperTheme}>
       <ThemeProvider value={navigationTheme}>
         <GameThemeProvider>
-          <Stack>
-            <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+          <Stack
+            screenOptions={{
+              animation: 'slide_from_right',
+              animationDuration: 300,
+            }}
+          >
+            <Stack.Screen 
+              name="index" 
+              options={{ 
+                headerShown: false,
+                animation: 'fade',
+              }} 
+            />
+            <Stack.Screen 
+              name="game" 
+              options={{ 
+                headerShown: false,
+                animation: 'slide_from_right',
+              }} 
+            />
+            <Stack.Screen 
+              name="settings" 
+              options={{ 
+                headerShown: false,
+                animation: 'slide_from_right',
+              }} 
+            />
             <Stack.Screen name="+not-found" />
           </Stack>
         </GameThemeProvider>

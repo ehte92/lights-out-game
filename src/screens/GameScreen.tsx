@@ -12,6 +12,7 @@ import {
   Modal,
   Card,
   Divider,
+  IconButton,
 } from 'react-native-paper';
 import Animated, {
   useSharedValue,
@@ -21,6 +22,7 @@ import Animated, {
   withDelay,
 } from 'react-native-reanimated';
 import { LinearGradient } from 'expo-linear-gradient';
+import { useRouter } from 'expo-router';
 import { useGameStore } from '../stores/gameStore';
 import { GameGrid } from '../components/game/GameGrid';
 import { GameStats } from '../components/game/GameStats';
@@ -29,6 +31,7 @@ import { useGameTheme } from '../contexts/ThemeContext';
 
 export const GameScreen: React.FC = () => {
   const { colors, paperTheme } = useGameTheme();
+  const router = useRouter();
   const {
     currentGame,
     isPlaying,
@@ -146,12 +149,23 @@ export const GameScreen: React.FC = () => {
       <SafeAreaView style={styles.safeArea}>
         {/* Header */}
         <Surface style={[styles.header, { backgroundColor: colors.panelBackground }]} elevation={1}>
-          <Text variant="displayMedium" style={{ color: paperTheme.colors.onSurface }}>
-            Lights Out
-          </Text>
-          <Text variant="bodyLarge" style={{ color: paperTheme.colors.onSurfaceVariant }}>
-            Turn off all the lights
-          </Text>
+          <View style={styles.headerContent}>
+            <IconButton 
+              icon="arrow-left" 
+              size={24}
+              iconColor={paperTheme.colors.onSurface}
+              onPress={() => router.back()}
+              style={styles.backButton}
+            />
+            <View style={styles.headerText}>
+              <Text variant="displayMedium" style={{ color: paperTheme.colors.onSurface }}>
+                Lights Out
+              </Text>
+              <Text variant="bodyLarge" style={{ color: paperTheme.colors.onSurfaceVariant }}>
+                Turn off all the lights
+              </Text>
+            </View>
+          </View>
         </Surface>
 
         {/* Game Stats */}
@@ -301,12 +315,23 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   header: {
-    alignItems: 'center',
     paddingVertical: 20,
     paddingHorizontal: 20,
     marginBottom: 10,
     borderRadius: 16,
     marginHorizontal: 16,
+  },
+  headerContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  backButton: {
+    margin: 0,
+    marginRight: 8,
+  },
+  headerText: {
+    flex: 1,
+    alignItems: 'center',
   },
   gameContainer: {
     flex: 1,
