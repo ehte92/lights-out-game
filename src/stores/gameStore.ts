@@ -245,14 +245,31 @@ export const useGameStore = create<GameStore>((set, get) => ({
     const { currentGame } = get();
     if (!currentGame) return;
     
-    const newGame = createInitialGameState(currentGame.gridSize, currentGame.difficulty);
+    if (__DEV__) {
+      console.log('🔄 Resetting game to original puzzle state');
+    }
+    
+    // True reset: restore the same puzzle to its original state
+    const resetGame = {
+      ...currentGame,
+      grid: currentGame.originalGrid.map(row => [...row]), // Deep copy of original grid
+      moves: 0,
+      isComplete: false,
+      elapsedTime: 0,
+      lastResumeTime: Date.now(), // Start timing from reset
+      endTime: undefined,
+    };
     
     set({
-      currentGame: newGame,
+      currentGame: resetGame,
       isPlaying: true,
       isPaused: false,
       showVictory: false,
     });
+    
+    if (__DEV__) {
+      console.log('🔄 Game reset to original puzzle state');
+    }
     
     GameHaptics.buttonPress();
   },

@@ -262,7 +262,7 @@ export const GameScreen: React.FC = () => {
               style={styles.controlButtonCompact}
               size="medium"
               variant="secondary"
-              accessibilityLabel="Reset Current Game"
+              accessibilityLabel="Restart This Puzzle"
             >
               <MaterialIcons 
                 name="refresh" 
@@ -362,10 +362,10 @@ export const GameScreen: React.FC = () => {
             ]}>
               <View style={styles.confirmContent}>
                 <Text style={[typography.headlineSmall, styles.confirmTitle]}>
-                  Reset Game
+                  Restart Puzzle
                 </Text>
                 <Text style={[typography.bodyMedium, styles.confirmMessage]}>
-                  Are you sure you want to restart this puzzle?
+                  This will restart the same puzzle from the beginning. Your moves and time will be reset.
                 </Text>
                 <View style={styles.confirmButtons}>
                   <PremiumButton
@@ -376,7 +376,7 @@ export const GameScreen: React.FC = () => {
                     variant="secondary"
                   />
                   <PremiumButton
-                    title="Reset"
+                    title="Restart"
                     onPress={confirmReset}
                     style={styles.confirmButton}
                     size="medium"

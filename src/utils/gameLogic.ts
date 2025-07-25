@@ -105,6 +105,7 @@ export const createInitialGameState = (
   
   return {
     grid,
+    originalGrid: grid.map(row => [...row]), // Deep copy of the original puzzle for true reset
     moves: 0,
     isComplete: false,
     difficulty,

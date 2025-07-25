@@ -2,6 +2,7 @@ export type Difficulty = 'easy' | 'medium' | 'hard';
 
 export type GameState = {
   grid: boolean[][];
+  originalGrid: boolean[][]; // Store the original puzzle configuration for true reset
   moves: number;
   isComplete: boolean;
   difficulty: Difficulty;
