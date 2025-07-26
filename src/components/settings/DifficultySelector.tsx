@@ -14,20 +14,23 @@ const DIFFICULTY_OPTIONS = [
   { 
     value: 'easy' as Difficulty, 
     label: 'Easy', 
-    description: '3-5 moves',
-    icon: '🟢'
+    icon: '●',
+    color: '#22c55e',
+    textColor: '#ffffff'
   },
   { 
     value: 'medium' as Difficulty, 
     label: 'Medium', 
-    description: '6-9 moves',
-    icon: '🟡'
+    icon: '◆',
+    color: '#f59e0b',
+    textColor: '#000000'
   },
   { 
     value: 'hard' as Difficulty, 
     label: 'Hard', 
-    description: '10-15 moves',
-    icon: '🔴'
+    icon: '▲',
+    color: '#ef4444',
+    textColor: '#ffffff'
   },
 ];
 
@@ -49,8 +52,9 @@ export const DifficultySelector: React.FC<DifficultySelectorProps> = ({
       }
     };
     
-    const backgroundColor = isSelected ? colors.primary : colors.background;
-    const textColor = isSelected ? colors.background : colors.onBackground;
+    // Use difficulty-specific colors when selected, theme colors when not
+    const backgroundColor = isSelected ? option.color : colors.background;
+    const textColor = isSelected ? option.textColor : colors.onBackground;
     const borderColor = borders.color;
     
     return (
@@ -80,12 +84,13 @@ export const DifficultySelector: React.FC<DifficultySelectorProps> = ({
       >
         <Text
           style={[
-            typography.headlineMedium,
+            typography.headlineSmall,
             {
               color: textColor,
               fontWeight: '900',
               textAlign: 'center',
               marginBottom: 4,
+              fontSize: 16,
             },
           ]}
         >
@@ -93,28 +98,16 @@ export const DifficultySelector: React.FC<DifficultySelectorProps> = ({
         </Text>
         <Text
           style={[
-            typography.titleLarge,
+            typography.bodyMedium,
             {
               color: textColor,
               fontWeight: '900', // Bold for neobrutalism
               textAlign: 'center',
-              marginBottom: 4,
+              fontSize: 12,
             },
           ]}
         >
           {option.label}
-        </Text>
-        <Text
-          style={[
-            typography.bodyMedium,
-            {
-              color: textColor,
-              fontWeight: '700',
-              textAlign: 'center',
-            },
-          ]}
-        >
-          {option.description}
         </Text>
         
         {/* Difficulty indicator bars */}
@@ -190,7 +183,7 @@ export const DifficultySelector: React.FC<DifficultySelectorProps> = ({
         Number of moves needed to generate puzzles
       </Text>
       
-      <View style={styles.optionsContainer}>
+      <View style={styles.optionsGrid}>
         {DIFFICULTY_OPTIONS.map(renderDifficultyOption)}
       </View>
     </View>
@@ -204,24 +197,28 @@ const styles = StyleSheet.create({
     marginVertical: 8,
     marginHorizontal: 16,
   },
-  optionsContainer: {
-    gap: 12,
+  optionsGrid: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
   },
   difficultyOption: {
     borderRadius: 0, // Sharp corners for neobrutalism
-    padding: 20,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
     alignItems: 'center',
-    minHeight: 120,
+    minHeight: 70,
     justifyContent: 'center',
+    minWidth: 80,
   },
   difficultyBars: {
     flexDirection: 'row',
-    gap: 4,
-    marginTop: 12,
+    gap: 1,
+    marginTop: 6,
   },
   difficultyBar: {
-    width: 20,
-    height: 4,
+    width: 8,
+    height: 2,
     borderRadius: 0, // Sharp corners for neobrutalism
   },
   disabled: {
