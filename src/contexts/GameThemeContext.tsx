@@ -49,13 +49,39 @@ export const GameThemeProvider: React.FC<GameThemeProviderProps> = ({ children }
     checkUnlockRequirements,
   } = useThemeStore();
 
-  // Check for theme unlocks when component mounts
-  // In a real app, this would be connected to game stats/achievements
+  // Check for theme unlocks when component mounts using real player progression
   useEffect(() => {
-    // Mock player data - in real app, get from game store
-    const mockPlayerLevel = 15;
-    const mockAchievements = ['first_medium', 'streak_5'];
-    checkUnlockRequirements(mockPlayerLevel, mockAchievements);
+    const loadPlayerProgressionAndCheckUnlocks = async () => {
+      try {
+        const { getPlayerProgression } = await import('../utils/storage');
+        const { getAchievements } = await import('../utils/storage');
+        
+        const progression = await getPlayerProgression();
+        const achievements = await getAchievements();
+        
+        const unlockedAchievementIds = achievements
+          .filter(achievement => achievement.unlocked)
+          .map(achievement => achievement.id);
+        
+        checkUnlockRequirements(progression.currentLevel, unlockedAchievementIds);
+        
+        if (__DEV__) {
+          console.log('🎨 Theme unlock check:', {
+            playerLevel: progression.currentLevel,
+            totalXP: progression.totalXP,
+            unlockedAchievements: unlockedAchievementIds,
+          });
+        }
+      } catch (error) {
+        if (__DEV__) {
+          console.error('Error loading player progression for theme unlocks:', error);
+        }
+        // Fallback to default unlocks if there's an error
+        checkUnlockRequirements(1, []);
+      }
+    };
+    
+    loadPlayerProgressionAndCheckUnlocks();
   }, [checkUnlockRequirements]);
 
   const contextValue: GameThemeContextValue = {

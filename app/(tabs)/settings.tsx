@@ -1,16 +1,13 @@
 import { StyleSheet, ScrollView, StatusBar, Platform } from 'react-native';
 import { Text } from 'react-native-paper';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
 import { View } from 'react-native';
-import { MaterialIcons } from '@expo/vector-icons';
 
 import { ThemeSelector } from '@/src/components/themes/ThemeSelector';
 import { ToggleSwitch } from '@/src/components/settings/ToggleSwitch';
 import { GridSizeSelector } from '@/src/components/settings/GridSizeSelector';
 import { DifficultySelector } from '@/src/components/settings/DifficultySelector';
 import { SettingsSection } from '@/src/components/settings/SettingsSection';
-import { PremiumButton } from '@/src/components/ui/PremiumButton';
 import { useAppTheme, useAppTypography, useAppBorders } from '@/src/contexts/AppThemeContext';
 import { GameThemeProvider } from '@/src/contexts/GameThemeContext';
 import { useGameStore } from '@/src/stores/gameStore';
@@ -19,7 +16,6 @@ export default function SettingsScreen() {
   const { colors, paperTheme } = useAppTheme();
   const typography = useAppTypography();
   const borders = useAppBorders();
-  const router = useRouter();
   
   const { settings, updateSettings } = useGameStore();
   
@@ -46,18 +42,31 @@ export default function SettingsScreen() {
         translucent={true}
         backgroundColor="transparent"
       />
-      <SafeAreaView style={styles.safeArea}>
-        {/* Back Button in Top Left */}
-        <View style={styles.topBar}>
-          <PremiumButton
-            title=""
-            onPress={() => router.back()}
-            style={styles.backButton}
-            size="small"
-            variant="secondary"
-          >
-            <MaterialIcons name="arrow-back" size={20} color="#000000" />
-          </PremiumButton>
+      <SafeAreaView edges={['top']} style={styles.safeArea}>
+        {/* Header for Tab */}
+        <View style={styles.header}>
+          <Text style={[
+            typography.headlineLarge,
+            {
+              color: colors.background, // White text
+              fontWeight: '900',
+              textAlign: 'center',
+            }
+          ]}>
+            SETTINGS
+          </Text>
+          <Text style={[
+            typography.bodyLarge,
+            {
+              color: colors.background,
+              fontWeight: '600',
+              textAlign: 'center',
+              marginTop: 4,
+              opacity: 0.9,
+            }
+          ]}>
+            Customize your gaming experience
+          </Text>
         </View>
 
         <ScrollView 
@@ -176,18 +185,13 @@ const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
   },
+  header: {
+    paddingHorizontal: 16,
+    paddingVertical: 20,
+    alignItems: 'center',
+  },
   scrollContent: {
     paddingBottom: 32,
-    paddingTop: 8, // Small top padding after back button
-  },
-  topBar: {
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    alignItems: 'flex-start',
-  },
-  backButton: {
-    minWidth: 44,
-    minHeight: 44,
   },
   themeContainer: {
     // Container for theme selector with proper spacing

@@ -2,13 +2,13 @@ import React, { useEffect } from 'react';
 import {
   View,
   StyleSheet,
-  SafeAreaView,
   StatusBar,
   Dimensions,
   Text,
   Pressable,
   Platform,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { MaterialIcons } from '@expo/vector-icons';
 import Animated, {
   useSharedValue,
@@ -42,8 +42,6 @@ export const MainMenuScreen: React.FC = () => {
   const titleTranslateY = useSharedValue(40);
   const buttonScale = useSharedValue(0.9);
   const buttonOpacity = useSharedValue(0);
-  const settingsOpacity = useSharedValue(0);
-  const settingsPressed = useSharedValue(false);
 
   useEffect(() => {
     // Sophisticated entrance sequence
@@ -60,9 +58,6 @@ export const MainMenuScreen: React.FC = () => {
     // Button hero entrance
     buttonScale.value = withDelay(1000, withSpring(1, springConfig));
     buttonOpacity.value = withDelay(1000, withSpring(1, { damping: 15 }));
-    
-    // Settings subtle appearance
-    settingsOpacity.value = withDelay(1200, withSpring(1, { damping: 12 }));
   }, []);
 
   const logoAnimatedStyle = useAnimatedStyle(() => ({
@@ -80,13 +75,6 @@ export const MainMenuScreen: React.FC = () => {
     transform: [{ scale: buttonScale.value }],
   }));
 
-  const settingsAnimatedStyle = useAnimatedStyle(() => ({
-    opacity: settingsOpacity.value,
-    transform: [
-      { translateX: settingsPressed.value ? 2 : 0 },
-      { translateY: settingsPressed.value ? 2 : 0 },
-    ],
-  }));
 
   const handleContinue = () => {
     router.push('/game');
@@ -97,9 +85,6 @@ export const MainMenuScreen: React.FC = () => {
     router.push('/game');
   };
 
-  const handleSettings = () => {
-    router.push('/settings');
-  };
 
   return (
     <AppAtmosphericBackground>
@@ -108,34 +93,8 @@ export const MainMenuScreen: React.FC = () => {
         translucent={true}
         backgroundColor="transparent"
       />
-      <SafeAreaView style={styles.safeArea}>
+      <SafeAreaView edges={['top']} style={styles.safeArea}>
         
-        {/* Neobrutalist Settings Button */}
-        <Animated.View style={[styles.settingsContainer, settingsAnimatedStyle]}>
-          <Pressable
-            style={[
-              styles.settingsButton,
-              {
-                backgroundColor: colors.background,
-                borderWidth: borders.thick,
-                borderColor: borders.color,
-                ...Platform.select({
-                  ios: shadows.medium,
-                  android: { elevation: shadows.medium.elevation },
-                }),
-              }
-            ]}
-            onPress={handleSettings}
-            onPressIn={() => { settingsPressed.value = true; }}
-            onPressOut={() => { settingsPressed.value = false; }}
-          >
-            <MaterialIcons 
-              name="settings" 
-              size={24} 
-              color={colors.onBackground}
-            />
-          </Pressable>
-        </Animated.View>
 
         {/* Hero Brand Section */}
         <View style={styles.heroContainer}>
@@ -173,20 +132,6 @@ export const MainMenuScreen: React.FC = () => {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-  },
-  settingsContainer: {
-    position: 'absolute',
-    top: 60, // Increased spacing from status bar
-    right: 20,
-    zIndex: 10,
-  },
-  settingsButton: {
-    width: 48,
-    height: 48,
-    borderRadius: 0, // Sharp corners for neobrutalism
-    justifyContent: 'center',
-    alignItems: 'center',
-    // Background, border, and shadow applied inline
   },
   heroContainer: {
     flex: 1,

@@ -41,3 +41,18 @@ export type GameSettings = {
   gridSize: number;
   difficulty: Difficulty;
 };
+
+export type PlayerProgression = {
+  currentXP: number;
+  currentLevel: number;
+  totalXP: number;
+  xpToNextLevel: number;
+  lastUpdated: number;
+};
+
+export type XPReward = {
+  source: 'game_completion' | 'achievement' | 'streak_bonus' | 'difficulty_bonus' | 'perfect_game';
+  amount: number;
+  description: string;
+  timestamp: number;
+};

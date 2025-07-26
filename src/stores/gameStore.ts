@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { GameState, Difficulty, GameStats, GameSettings, Achievement } from '../types/game';
+import { GameState, Difficulty, GameStats, GameSettings, Achievement, PlayerProgression, XPReward } from '../types/game';
 import { 
   createInitialGameState, 
   toggleCell, 
@@ -15,8 +15,16 @@ import {
   getAchievements,
   saveAchievements,
   unlockAchievement,
-  updateLastPlayed
+  updateLastPlayed,
+  getPlayerProgression,
+  addXPRewards
 } from '../utils/storage';
+import { 
+  calculateGameCompletionXP, 
+  calculateLevelFromXP,
+  applyXPRewards,
+  createDefaultProgression
+} from '../utils/playerProgression';
 import { GameHaptics } from '../utils/haptics';
 import { GameAudio } from '../utils/audioManager';
 
@@ -30,6 +38,7 @@ interface GameStore {
   stats: GameStats;
   settings: GameSettings;
   achievements: Achievement[];
+  progression: PlayerProgression;
   
   // UI state
   isLoading: boolean;
@@ -54,6 +63,10 @@ interface GameStore {
   // Achievements
   loadAchievements: () => Promise<void>;
   checkAchievements: () => Promise<void>;
+  
+  // Player Progression
+  loadProgression: () => Promise<void>;
+  awardXP: (rewards: XPReward[]) => Promise<boolean>; // Returns true if leveled up
   
   // UI actions
   setShowVictory: (show: boolean) => void;
@@ -82,6 +95,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
     difficulty: 'medium',
   },
   achievements: [],
+  progression: createDefaultProgression(),
   isLoading: false,
   showVictory: false,
   showSettings: false,
@@ -168,6 +182,26 @@ export const useGameStore = create<GameStore>((set, get) => ({
       // Reload stats to reflect changes
       const newStats = await getGameStats();
       set({ stats: newStats });
+      
+      // Award XP for game completion
+      const isPerfectGame = false; // TODO: Implement perfect game detection logic
+      const xpRewards = calculateGameCompletionXP(
+        updatedGame,
+        isPerfectGame,
+        newStats.currentStreak,
+        finalElapsedTime
+      );
+      
+      const leveledUp = await get().awardXP(xpRewards);
+      
+      if (__DEV__) {
+        const totalXP = xpRewards.reduce((sum, reward) => sum + reward.amount, 0);
+        console.log('🎯 XP awarded for game completion:', {
+          totalXP,
+          rewards: xpRewards.map(r => ({ source: r.source, amount: r.amount })),
+          leveledUp,
+        });
+      }
       
       // Check for achievements
       await get().checkAchievements();
@@ -370,6 +404,40 @@ export const useGameStore = create<GameStore>((set, get) => ({
       achievements = await getAchievements();
       set({ achievements });
     }
+  },
+  
+  // Player Progression
+  loadProgression: async () => {
+    const progression = await getPlayerProgression();
+    set({ progression });
+  },
+  
+  awardXP: async (rewards: XPReward[]): Promise<boolean> => {
+    const { progression } = get();
+    
+    const { newProgression, leveledUp, levelsGained } = applyXPRewards(progression, rewards);
+    
+    // Update stored progression
+    await addXPRewards(rewards);
+    
+    // Update state
+    set({ progression: newProgression });
+    
+    if (leveledUp) {
+      if (__DEV__) {
+        console.log('🎉 Level up!', {
+          oldLevel: progression.currentLevel,
+          newLevel: newProgression.currentLevel,
+          levelsGained,
+          totalXP: newProgression.totalXP,
+        });
+      }
+      
+      // Trigger level up haptics
+      await GameHaptics.achievementUnlock();
+    }
+    
+    return leveledUp;
   },
 
   // UI actions

@@ -1,11 +1,14 @@
-import { GameStats, GameSettings, Achievement } from '../types/game';
+import { GameStats, GameSettings, Achievement, PlayerProgression, XPReward } from '../types/game';
 import { storage } from './storageAdapter';
+import { createDefaultProgression } from './playerProgression';
 
 // Storage keys
 const STORAGE_KEYS = {
   GAME_STATS: 'game_stats',
   SETTINGS: 'settings',
   ACHIEVEMENTS: 'achievements',
+  PLAYER_PROGRESSION: 'player_progression',
+  XP_HISTORY: 'xp_history',
   DAILY_PUZZLE_COMPLETED: 'daily_puzzle_completed',
   LAST_PLAYED: 'last_played',
 } as const;
@@ -149,6 +152,93 @@ export const unlockAchievement = async (achievementId: string): Promise<boolean>
   }
   
   return false; // Achievement was already unlocked or doesn't exist
+};
+
+// Player Progression functions
+export const getPlayerProgression = async (): Promise<PlayerProgression> => {
+  try {
+    const progressionString = await storage.getString(STORAGE_KEYS.PLAYER_PROGRESSION);
+    return progressionString ? JSON.parse(progressionString) : createDefaultProgression();
+  } catch (error) {
+    if (__DEV__) {
+      console.error('Error getting player progression:', error);
+    }
+    return createDefaultProgression();
+  }
+};
+
+export const savePlayerProgression = async (progression: PlayerProgression): Promise<void> => {
+  try {
+    await storage.set(STORAGE_KEYS.PLAYER_PROGRESSION, JSON.stringify(progression));
+  } catch (error) {
+    if (__DEV__) {
+      console.error('Error saving player progression:', error);
+    }
+  }
+};
+
+export const addXPRewards = async (rewards: XPReward[]): Promise<PlayerProgression> => {
+  try {
+    const currentProgression = await getPlayerProgression();
+    const totalNewXP = rewards.reduce((sum, reward) => sum + reward.amount, 0);
+    
+    const newProgression: PlayerProgression = {
+      ...currentProgression,
+      totalXP: currentProgression.totalXP + totalNewXP,
+      lastUpdated: Date.now(),
+    };
+    
+    // Recalculate level and XP to next level
+    const { calculateLevelFromXP } = await import('./playerProgression');
+    const calculatedProgression = calculateLevelFromXP(newProgression.totalXP);
+    
+    await savePlayerProgression(calculatedProgression);
+    
+    // Save XP history
+    await saveXPHistory(rewards);
+    
+    return calculatedProgression;
+  } catch (error) {
+    if (__DEV__) {
+      console.error('Error adding XP rewards:', error);
+    }
+    return await getPlayerProgression();
+  }
+};
+
+// XP History functions (for tracking recent rewards)
+export const getXPHistory = async (): Promise<XPReward[]> => {
+  try {
+    const historyString = await storage.getString(STORAGE_KEYS.XP_HISTORY);
+    const history = historyString ? JSON.parse(historyString) : [];
+    
+    // Keep only last 50 rewards and rewards from last 7 days
+    const sevenDaysAgo = Date.now() - (7 * 24 * 60 * 60 * 1000);
+    return history
+      .filter((reward: XPReward) => reward.timestamp > sevenDaysAgo)
+      .slice(-50);
+  } catch (error) {
+    if (__DEV__) {
+      console.error('Error getting XP history:', error);
+    }
+    return [];
+  }
+};
+
+export const saveXPHistory = async (newRewards: XPReward[]): Promise<void> => {
+  try {
+    const currentHistory = await getXPHistory();
+    const updatedHistory = [...currentHistory, ...newRewards];
+    
+    // Keep only last 50 rewards
+    const trimmedHistory = updatedHistory.slice(-50);
+    
+    await storage.set(STORAGE_KEYS.XP_HISTORY, JSON.stringify(trimmedHistory));
+  } catch (error) {
+    if (__DEV__) {
+      console.error('Error saving XP history:', error);
+    }
+  }
 };
 
 // Daily puzzle functions

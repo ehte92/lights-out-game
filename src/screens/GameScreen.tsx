@@ -49,6 +49,7 @@ export const GameScreen: React.FC = () => {
     loadStats,
     loadSettings,
     loadAchievements,
+    loadProgression,
   } = useGameStore();
 
   // Navigation-based auto-pause - only handle actual navigation events
@@ -84,6 +85,7 @@ export const GameScreen: React.FC = () => {
         await loadStats();
         await loadSettings();
         await loadAchievements();
+        await loadProgression();
         
         // Start a new game if none exists
         if (!currentGame) {

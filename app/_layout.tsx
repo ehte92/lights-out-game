@@ -34,12 +34,13 @@ function RootLayoutContent() {
       <ThemeProvider value={navigationTheme}>
         <Stack
           screenOptions={{
+            headerShown: false,
             animation: 'slide_from_right',
             animationDuration: 300,
           }}
         >
           <Stack.Screen 
-            name="index" 
+            name="(tabs)" 
             options={{ 
               headerShown: false,
               animation: 'fade',
@@ -47,13 +48,6 @@ function RootLayoutContent() {
           />
           <Stack.Screen 
             name="game" 
-            options={{ 
-              headerShown: false,
-              animation: 'slide_from_right',
-            }} 
-          />
-          <Stack.Screen 
-            name="settings" 
             options={{ 
               headerShown: false,
               animation: 'slide_from_right',
