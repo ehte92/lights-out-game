@@ -44,6 +44,7 @@ interface GameStore {
   isLoading: boolean;
   showVictory: boolean;
   showSettings: boolean;
+  achievementNotification: Achievement | null;
   
   // Actions
   startNewGame: (gridSize?: number, difficulty?: Difficulty) => void;
@@ -72,6 +73,8 @@ interface GameStore {
   setShowVictory: (show: boolean) => void;
   setShowSettings: (show: boolean) => void;
   setLoading: (loading: boolean) => void;
+  showAchievementNotification: (achievement: Achievement) => void;
+  hideAchievementNotification: () => void;
 }
 
 export const useGameStore = create<GameStore>((set, get) => ({
@@ -99,6 +102,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
   isLoading: false,
   showVictory: false,
   showSettings: false,
+  achievementNotification: null,
 
   // Game actions
   startNewGame: async (gridSize?: number, difficulty?: Difficulty) => {
@@ -356,53 +360,135 @@ export const useGameStore = create<GameStore>((set, get) => ({
 
   // Achievements actions
   loadAchievements: async () => {
-    const achievements = await getAchievements();
-    set({ achievements });
+    try {
+      if (__DEV__) {
+        console.log('🏆 Loading achievements...');
+      }
+      
+      // Always initialize achievements to ensure they exist
+      const { initializeAchievements } = await import('../utils/achievements');
+      const achievements = await initializeAchievements();
+      
+      if (__DEV__) {
+        console.log('🏆 Achievements loaded:', {
+          total: achievements.length,
+          unlocked: achievements.filter(a => a.unlocked).length,
+          achievements: achievements.map(a => ({ id: a.id, title: a.title, unlocked: a.unlocked }))
+        });
+      }
+      
+      set({ achievements });
+    } catch (error) {
+      if (__DEV__) {
+        console.error('🏆 Error loading achievements:', error);
+      }
+      // Fallback to basic loading
+      const achievements = await getAchievements();
+      set({ achievements });
+    }
   },
 
   checkAchievements: async () => {
     const { stats, currentGame } = get();
     
-    // Example achievements - you can expand this
-    const achievementChecks = [
-      {
-        id: 'first_win',
-        title: 'First Victory',
-        description: 'Complete your first puzzle',
-        condition: stats.gamesWon >= 1,
-      },
-      {
-        id: 'streak_5',
-        title: 'Streak Master',
-        description: 'Win 5 games in a row',
-        condition: stats.currentStreak >= 5,
-      },
-      {
-        id: 'speed_demon',
-        title: 'Speed Demon',
-        description: 'Complete a medium puzzle in under 30 seconds',
-        condition: currentGame?.difficulty === 'medium' && 
-                   currentGame?.endTime && 
-                   currentGame.elapsedTime < 30,
-      },
-    ];
-
-    let achievements = await getAchievements();
-    let hasNewAchievements = false;
-
-    for (const check of achievementChecks) {
-      if (check.condition) {
-        const wasUnlocked = await unlockAchievement(check.id);
+    // Only check achievements if we have a completed game
+    if (!currentGame?.isComplete) {
+      if (__DEV__) {
+        console.log('🏆 Achievement check skipped - game not complete');
+      }
+      return;
+    }
+    
+    try {
+      if (__DEV__) {
+        console.log('🏆 Starting achievement check...', {
+          gamesWon: stats.gamesWon,
+          currentStreak: stats.currentStreak,
+          moves: currentGame.moves,
+          time: currentGame.elapsedTime,
+          difficulty: currentGame.difficulty,
+          gridSize: currentGame.gridSize
+        });
+      }
+      
+      // Import achievement checking functions
+      const { checkAchievements, initializeAchievements } = await import('../utils/achievements');
+      
+      // Ensure achievements are initialized
+      await initializeAchievements();
+      
+      // Create achievement checking context
+      const context = {
+        stats,
+        completedGame: currentGame,
+        currentTime: Date.now(),
+      };
+      
+      // Check for newly unlocked achievements
+      const potentialUnlocks = checkAchievements(context);
+      
+      if (__DEV__) {
+        console.log('🏆 Potential achievement unlocks:', potentialUnlocks);
+      }
+      
+      let hasNewAchievements = false;
+      
+      // Try to unlock each achievement
+      for (const achievementId of potentialUnlocks) {
+        if (__DEV__) {
+          console.log('🏆 Attempting to unlock:', achievementId);
+        }
+        
+        const wasUnlocked = await unlockAchievement(achievementId);
         if (wasUnlocked) {
           hasNewAchievements = true;
+          
+          if (__DEV__) {
+            console.log('🏆 ✅ Achievement successfully unlocked:', achievementId);
+          }
+          
+          // Trigger achievement unlock feedback
           await GameHaptics.achievementUnlock();
+          
+          // Find the achievement to show notification
+          const updatedAchievements = await getAchievements();
+          const unlockedAchievement = updatedAchievements.find(a => a.id === achievementId);
+          
+          if (unlockedAchievement) {
+            if (__DEV__) {
+              console.log('🏆 Showing notification for:', unlockedAchievement.title);
+            }
+            get().showAchievementNotification(unlockedAchievement);
+          } else {
+            if (__DEV__) {
+              console.warn('🏆 Could not find unlocked achievement for notification:', achievementId);
+            }
+          }
+        } else {
+          if (__DEV__) {
+            console.log('🏆 ❌ Achievement not unlocked (already unlocked or error):', achievementId);
+          }
         }
       }
-    }
-
-    if (hasNewAchievements) {
-      achievements = await getAchievements();
-      set({ achievements });
+      
+      // Reload achievements if any were unlocked
+      if (hasNewAchievements) {
+        const updatedAchievements = await getAchievements();
+        set({ achievements: updatedAchievements });
+        
+        if (__DEV__) {
+          console.log('🏆 Achievements state updated, total unlocked:', 
+            updatedAchievements.filter(a => a.unlocked).length);
+        }
+      } else {
+        if (__DEV__) {
+          console.log('🏆 No new achievements unlocked this round');
+        }
+      }
+    } catch (error) {
+      if (__DEV__) {
+        console.error('🏆 Error checking achievements:', error);
+      }
     }
   },
   
@@ -452,5 +538,29 @@ export const useGameStore = create<GameStore>((set, get) => ({
 
   setLoading: (loading: boolean) => {
     set({ isLoading: loading });
+  },
+
+  showAchievementNotification: (achievement: Achievement) => {
+    if (__DEV__) {
+      console.log('🏆 📱 Displaying achievement notification:', achievement.title);
+    }
+    
+    // Clean serialization to remove any problematic metadata
+    const cleanAchievement: Achievement = {
+      id: String(achievement.id),
+      title: String(achievement.title),
+      description: String(achievement.description),
+      unlocked: Boolean(achievement.unlocked),
+      unlockedAt: achievement.unlockedAt ? Number(achievement.unlockedAt) : undefined,
+    };
+    
+    set({ achievementNotification: cleanAchievement });
+  },
+
+  hideAchievementNotification: () => {
+    if (__DEV__) {
+      console.log('🏆 📱 Hiding achievement notification');
+    }
+    set({ achievementNotification: null });
   },
 }));

@@ -7,13 +7,17 @@ import { useEffect } from 'react';
 
 import { AppThemeProvider, useAppTheme } from '@/src/contexts/AppThemeContext';
 import { GameAudio } from '@/src/utils/audioManager';
+import { suppressKnownWarnings } from '@/src/utils/warningSuppressionSetup';
 
 // Root layout component that needs to bootstrap theme system
 function RootLayoutContent() {
   const { paperTheme, isDark } = useAppTheme();
   
-  // Initialize audio system when app starts
+  // Initialize app systems when app starts
   useEffect(() => {
+    // Enable warning suppression for React 19.0.0 + RN 0.79.5 compatibility
+    suppressKnownWarnings();
+    
     GameAudio.initialize().catch((error) => {
       console.error('Failed to initialize audio system:', error);
     });

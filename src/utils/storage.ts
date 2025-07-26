@@ -141,17 +141,48 @@ export const saveAchievements = async (achievements: Achievement[]): Promise<voi
 };
 
 export const unlockAchievement = async (achievementId: string): Promise<boolean> => {
-  const achievements = await getAchievements();
-  const achievement = achievements.find(a => a.id === achievementId);
-  
-  if (achievement && !achievement.unlocked) {
+  try {
+    // Get current achievements and ensure they're properly initialized
+    let achievements = await getAchievements();
+    
+    // If no achievements exist, initialize them first
+    if (achievements.length === 0) {
+      const { initializeAchievements } = await import('./achievements');
+      achievements = await initializeAchievements();
+    }
+    
+    const achievement = achievements.find(a => a.id === achievementId);
+    
+    if (!achievement) {
+      if (__DEV__) {
+        console.warn('🏆 Achievement not found:', achievementId);
+      }
+      return false;
+    }
+    
+    if (achievement.unlocked) {
+      if (__DEV__) {
+        console.log('🏆 Achievement already unlocked:', achievementId);
+      }
+      return false; // Already unlocked
+    }
+    
+    // Unlock the achievement
     achievement.unlocked = true;
     achievement.unlockedAt = Date.now();
     await saveAchievements(achievements);
+    
+    if (__DEV__) {
+      console.log('🏆 Achievement successfully unlocked:', achievementId, achievement.title);
+    }
+    
     return true; // Achievement was just unlocked
+  } catch (error) {
+    if (__DEV__) {
+      console.error('🏆 Error unlocking achievement:', achievementId, error);
+    }
+    return false;
   }
-  
-  return false; // Achievement was already unlocked or doesn't exist
 };
 
 // Player Progression functions

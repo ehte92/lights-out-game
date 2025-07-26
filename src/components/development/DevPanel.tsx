@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Modal } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Modal, ScrollView } from 'react-native';
 import { FeatureFlagPanel } from './FeatureFlagPanel';
+import { useGameStore } from '../../stores/gameStore';
+import { MinimalTestNotification } from '../ui/MinimalTestNotification';
 
 /**
  * Development panel with feature flags and other dev tools
@@ -8,10 +10,25 @@ import { FeatureFlagPanel } from './FeatureFlagPanel';
  */
 export const DevPanel: React.FC = () => {
   const [isVisible, setIsVisible] = useState(false);
+  const [showMinimalTest, setShowMinimalTest] = useState(false);
+  const { showAchievementNotification } = useGameStore();
 
   if (!__DEV__) {
     return null;
   }
+
+  const testAchievementNotification = () => {
+    const testAchievement = {
+      id: 'test_achievement',
+      title: 'Test Achievement',
+      description: 'This is a test notification to preview the UI',
+      unlocked: true,
+      unlockedAt: Date.now(),
+    };
+    
+    showAchievementNotification(testAchievement);
+    // Keep dev panel open for testing
+  };
 
   return (
     <>
@@ -40,7 +57,40 @@ export const DevPanel: React.FC = () => {
           </TouchableOpacity>
         </View>
         
-        <FeatureFlagPanel />
+        <ScrollView style={styles.modalContent}>
+          {/* Achievement Test Section */}
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Achievement System</Text>
+            <TouchableOpacity
+              style={styles.testButton}
+              onPress={testAchievementNotification}
+            >
+              <Text style={styles.testButtonText}>🏆 Test Achievement Notification</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.testButton}
+              onPress={() => setShowMinimalTest(!showMinimalTest)}
+            >
+              <Text style={styles.testButtonText}>🧪 Toggle Minimal Test Component</Text>
+            </TouchableOpacity>
+            <Text style={styles.sectionDescription}>
+              Tap to preview the achievement notification UI or test minimal component
+            </Text>
+          </View>
+
+          <FeatureFlagPanel />
+
+          {/* Minimal Test Component */}
+          {showMinimalTest && (
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>Minimal Test Component</Text>
+              <MinimalTestNotification
+                title="Minimal Test Title"
+                description="This is a minimal test description to isolate React Native text rendering issues"
+              />
+            </View>
+          )}
+        </ScrollView>
       </Modal>
     </>
   );
@@ -93,5 +143,46 @@ const styles = StyleSheet.create({
   closeButtonText: {
     fontSize: 18,
     color: '#666',
+  },
+  modalContent: {
+    flex: 1,
+    backgroundColor: '#fff',
+  },
+  section: {
+    padding: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: '#e0e0e0',
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#333',
+    marginBottom: 12,
+  },
+  sectionDescription: {
+    fontSize: 14,
+    color: '#666',
+    marginTop: 8,
+  },
+  testButton: {
+    backgroundColor: '#0066FF',
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    borderRadius: 0,
+    borderWidth: 3,
+    borderColor: '#000000',
+    marginVertical: 8,
+    // Neobrutalist shadow
+    shadowColor: '#000000',
+    shadowOffset: { width: 4, height: 4 },
+    shadowOpacity: 1,
+    shadowRadius: 0,
+    elevation: 4,
+  },
+  testButtonText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '800',
+    textAlign: 'center',
   },
 });

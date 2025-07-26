@@ -36,9 +36,11 @@ export const PlayerLevelCard: React.FC<PlayerLevelCardProps> = ({ progression })
   }, [progression.currentXP, progression.currentLevel, progressValue]);
 
   const animatedProps = useAnimatedProps(() => {
-    const width = (progressValue.value / 100) * 280; // 280 = progress bar width
+    // Make progress bar responsive - use percentage of available width
+    const maxWidth = 240; // Responsive width that fits in container
+    const width = (progressValue.value / 100) * maxWidth;
     return {
-      width: Math.max(0, Math.min(width, 280)),
+      width: Math.max(0, Math.min(width, maxWidth)),
     };
   });
 
@@ -77,46 +79,78 @@ export const PlayerLevelCard: React.FC<PlayerLevelCardProps> = ({ progression })
         animatedCardStyle,
       ]}
     >
-      {/* Level Badge */}
-      <View style={[
-        styles.levelBadge,
-        {
-          backgroundColor: colors.background,
-          borderWidth: borders.medium,
-          borderColor: borders.color,
-        }
-      ]}>
-        <Text style={[
-          typography.headlineSmall,
+      {/* Top Row: Level Badge and Total XP Badge */}
+      <View style={styles.topRow}>
+        <View style={[
+          styles.levelBadge,
           {
-            color: colors.onBackground,
-            fontWeight: '900',
-            fontSize: 16,
+            backgroundColor: colors.background,
+            borderWidth: borders.medium,
+            borderColor: borders.color,
           }
         ]}>
-          LVL
-        </Text>
-        <Text style={[
-          typography.headlineLarge,
+          <Text style={[
+            typography.headlineSmall,
+            {
+              color: colors.onBackground,
+              fontWeight: '900',
+              fontSize: 16,
+            }
+          ]}>
+            LVL
+          </Text>
+          <Text style={[
+            typography.headlineLarge,
+            {
+              color: colors.onBackground,
+              fontWeight: '900',
+              fontSize: 28,
+              lineHeight: 32,
+            }
+          ]}>
+            {progression.currentLevel}
+          </Text>
+        </View>
+
+        <View style={[
+          styles.totalXPBadge,
           {
-            color: colors.onBackground,
-            fontWeight: '900',
-            fontSize: 28,
-            lineHeight: 32,
+            backgroundColor: 'rgba(255,255,255,0.9)',
+            borderWidth: borders.thin,
+            borderColor: colors.background,
           }
         ]}>
-          {progression.currentLevel}
-        </Text>
+          <Text style={[
+            typography.bodySmall,
+            {
+              color: colors.onBackground,
+              fontWeight: '900',
+              fontSize: 10,
+            }
+          ]}>
+            TOTAL XP
+          </Text>
+          <Text style={[
+            typography.titleMedium,
+            {
+              color: colors.onBackground,
+              fontWeight: '900',
+            }
+          ]}>
+            {progression.totalXP.toLocaleString()}
+          </Text>
+        </View>
       </View>
 
-      {/* Level Info */}
-      <View style={styles.levelInfo}>
+      {/* Bottom Section: Level Info and Progress */}
+      <View style={styles.progressSection}>
         <Text style={[
           typography.headlineMedium,
           {
             color: colors.background, // White text on hot pink
             fontWeight: '900',
-            marginBottom: 4,
+            marginBottom: 8,
+            textAlign: 'center',
           }
         ]}>
           {isMaxLevel ? 'MAX LEVEL!' : `Level ${progression.currentLevel}`}
@@ -130,6 +164,7 @@ export const PlayerLevelCard: React.FC<PlayerLevelCardProps> = ({ progression })
                 color: colors.background,
                 fontWeight: '700',
                 marginBottom: 12,
+                textAlign: 'center',
               }
             ]}>
               {progression.currentXP} / {getXPRequiredForLevel(progression.currentLevel + 1)} XP
@@ -144,11 +179,11 @@ export const PlayerLevelCard: React.FC<PlayerLevelCardProps> = ({ progression })
                 borderColor: colors.background,
               }
             ]}>
-              <Svg height="12" width="280" style={styles.progressBarSvg}>
+              <Svg height="12" width="240" style={styles.progressBarSvg}>
                 <Rect
                   x="0"
                   y="0"
-                  width="280"
+                  width="240"
                   height="12"
                   fill="rgba(255,255,255,0.2)"
                 />
@@ -189,36 +224,6 @@ export const PlayerLevelCard: React.FC<PlayerLevelCardProps> = ({ progression })
           </Text>
         )}
       </View>
-
-      {/* Total XP Badge */}
-      <View style={[
-        styles.totalXPBadge,
-        {
-          backgroundColor: 'rgba(255,255,255,0.9)',
-          borderWidth: borders.thin,
-          borderColor: colors.background,
-        }
-      ]}>
-        <Text style={[
-          typography.bodySmall,
-          {
-            color: colors.onBackground,
-            fontWeight: '900',
-            fontSize: 10,
-          }
-        ]}>
-          TOTAL XP
-        </Text>
-        <Text style={[
-          typography.titleMedium,
-          {
-            color: colors.onBackground,
-            fontWeight: '900',
-          }
-        ]}>
-          {progression.totalXP.toLocaleString()}
-        </Text>
-      </View>
     </Animated.View>
   );
 };
@@ -229,9 +234,14 @@ const styles = StyleSheet.create({
     padding: 20,
     marginHorizontal: 16,
     marginVertical: 8,
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: 'column', // Changed to column layout
     minHeight: 120,
+  },
+  topRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 16,
   },
   levelBadge: {
     borderRadius: 0, // Sharp corners
@@ -239,29 +249,28 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: 16,
     minWidth: 80,
-  },
-  levelInfo: {
-    flex: 1,
-    alignItems: 'center',
-  },
-  progressBarContainer: {
-    borderRadius: 0, // Sharp corners
-    overflow: 'hidden',
-    width: 280,
-    height: 12,
-  },
-  progressBarSvg: {
-    width: '100%',
-    height: '100%',
   },
   totalXPBadge: {
     borderRadius: 0, // Sharp corners
     paddingHorizontal: 12,
     paddingVertical: 8,
     alignItems: 'center',
-    marginLeft: 16,
     minWidth: 80,
+  },
+  progressSection: {
+    alignItems: 'center',
+    width: '100%',
+  },
+  progressBarContainer: {
+    borderRadius: 0, // Sharp corners
+    overflow: 'hidden',
+    width: 240, // Responsive width that fits properly
+    height: 12,
+    alignSelf: 'center',
+  },
+  progressBarSvg: {
+    width: '100%',
+    height: '100%',
   },
 });

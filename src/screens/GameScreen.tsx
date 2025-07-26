@@ -28,6 +28,7 @@ import { DevPanel } from '../components/development/DevPanel';
 import { useAppTheme, useAppTypography, useAppBorders, useAppShadows } from '../contexts/AppThemeContext';
 import { PremiumButton } from '../components/ui/PremiumButton';
 import { GameThemeProvider } from '../contexts/GameThemeContext';
+import { AchievementNotification } from '../components/ui/AchievementNotification';
 
 export const GameScreen: React.FC = () => {
   const { colors, paperTheme } = useAppTheme();
@@ -40,12 +41,14 @@ export const GameScreen: React.FC = () => {
     isPlaying,
     isPaused,
     showVictory,
+    achievementNotification,
     makeMove,
     startNewGame,
     pauseGame,
     resumeGame,
     resetGame,
     setShowVictory,
+    hideAchievementNotification,
     loadStats,
     loadSettings,
     loadAchievements,
@@ -392,6 +395,15 @@ export const GameScreen: React.FC = () => {
 
         {/* Development Panel */}
         <DevPanel />
+
+        {/* Achievement Notification */}
+        {achievementNotification && (
+          <AchievementNotification
+            achievement={achievementNotification}
+            visible={!!achievementNotification}
+            onAnimationComplete={hideAchievementNotification}
+          />
+        )}
       </SafeAreaView>
     </View>
   );
