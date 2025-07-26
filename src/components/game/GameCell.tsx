@@ -8,7 +8,8 @@ import Animated, {
   interpolateColor,
   runOnJS,
 } from 'react-native-reanimated';
-import { useAppTheme, useAppBorders } from '../../contexts/AppThemeContext';
+import { useAppBorders } from '../../contexts/AppThemeContext';
+import { useGameColors } from '../../contexts/GameThemeContext';
 
 interface GameCellProps {
   isOn: boolean;
@@ -29,7 +30,7 @@ export const GameCell: React.FC<GameCellProps> = React.memo(({
   onPress,
   disabled = false,
 }) => {
-  const { colors } = useAppTheme();
+  const gameColors = useGameColors();
   const borders = useAppBorders();
   const scale = useSharedValue(1);
   const pressed = useSharedValue(false);
@@ -65,8 +66,8 @@ export const GameCell: React.FC<GameCellProps> = React.memo(({
   }, [pressed]);
 
   const animatedStyle = useAnimatedStyle(() => {
-    // Enhanced cell colors for floating design
-    const backgroundColor = isOn ? colors.cellOn : colors.cellOff;
+    // Use game theme colors for cells (not app theme colors)
+    const backgroundColor = isOn ? gameColors.cellOn : gameColors.cellOff;
     
     // Build style object with pre-calculated platform shadows
     const style = {

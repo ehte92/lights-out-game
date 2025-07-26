@@ -11,6 +11,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import Svg, { Circle, Path, Defs, RadialGradient, Stop } from 'react-native-svg';
 import { useAppTheme } from '../../contexts/AppThemeContext';
+import { useGameColors } from '../../contexts/GameThemeContext';
 
 const AnimatedCircle = Animated.createAnimatedComponent(Circle);
 
@@ -20,7 +21,8 @@ interface AppLogoProps {
 }
 
 export const AppLogo: React.FC<AppLogoProps> = ({ size = 80, animated = true }) => {
-  const { colors, paperTheme } = useAppTheme();
+  const { paperTheme } = useAppTheme();
+  const gameColors = useGameColors();
   
   // Animation values
   const glowOpacity = useSharedValue(0.6);
@@ -58,9 +60,9 @@ export const AppLogo: React.FC<AppLogoProps> = ({ size = 80, animated = true }) 
     opacity: glowOpacity.value,
   }));
 
-  const lightColor = colors.cellOn || paperTheme.colors.primary;
-  const darkColor = colors.cellOff || paperTheme.colors.surfaceVariant;
-  const glowColor = colors.accent || paperTheme.colors.secondary;
+  const lightColor = gameColors.cellOn || paperTheme.colors.primary;
+  const darkColor = gameColors.cellOff || paperTheme.colors.surfaceVariant;
+  const glowColor = paperTheme.colors.secondary; // Use app theme for glow, not game theme
 
   return (
     <Surface style={[styles.container, { width: size, height: size }]} elevation={0}>
