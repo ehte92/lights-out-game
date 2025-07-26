@@ -119,56 +119,6 @@ export default function SettingsScreen() {
             </GameThemeProvider>
           </SettingsSection>
 
-          {/* Info Section */}
-          <View
-            style={[
-              styles.infoPanel,
-              {
-                backgroundColor: colors.onBackground,
-                borderWidth: borders.thick,
-                borderColor: borders.color,
-                // Neobrutalist shadow
-                ...Platform.select({
-                  ios: {
-                    shadowColor: '#000000',
-                    shadowOffset: { width: 4, height: 4 },
-                    shadowOpacity: 1,
-                    shadowRadius: 0,
-                  },
-                  android: { elevation: 8 },
-                }),
-              },
-            ]}
-          >
-            <Text
-              style={[
-                typography.headlineSmall,
-                {
-                  color: colors.background, // White text on black background
-                  fontWeight: '900',
-                  textAlign: 'center',
-                  marginBottom: 12,
-                },
-              ]}
-            >
-              LIGHTS OUT
-            </Text>
-            <Text
-              style={[
-                typography.bodyMedium,
-                {
-                  color: colors.background, // White text on black background
-                  fontWeight: '600',
-                  textAlign: 'center',
-                  lineHeight: 22,
-                },
-              ]}
-            >
-              A classic puzzle game where you need to turn off all the lights. 
-              Tap a cell to toggle it and its neighbors. Master the patterns 
-              and unlock new themes as you progress!
-            </Text>
-          </View>
         </ScrollView>
       </SafeAreaView>
     </View>
@@ -195,12 +145,5 @@ const styles = StyleSheet.create({
   },
   themeContainer: {
     // Container for theme selector with proper spacing
-  },
-  infoPanel: {
-    padding: 24,
-    borderRadius: 0, // Sharp corners for neobrutalism
-    marginHorizontal: 16,
-    marginTop: 16,
-    marginBottom: 16,
   },
 });

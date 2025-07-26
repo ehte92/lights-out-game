@@ -19,6 +19,7 @@ import Animated, {
   interpolate,
 } from 'react-native-reanimated';
 import { useRouter } from 'expo-router';
+import { TouchableOpacity } from 'react-native';
 import { useAppTheme, useAppTypography, useAppBorders, useAppShadows } from '../contexts/AppThemeContext';
 import { useGameStore } from '../stores/gameStore';
 import { PremiumLogo } from '../components/ui/PremiumLogo';
@@ -94,7 +95,23 @@ export const MainMenuScreen: React.FC = () => {
         backgroundColor="transparent"
       />
       <SafeAreaView edges={['top']} style={styles.safeArea}>
-        
+        {/* Info Button */}
+        <View style={styles.infoButtonContainer}>
+          <TouchableOpacity
+            onPress={() => router.push('/gameinfo')}
+            style={[
+              styles.infoButton,
+              {
+                backgroundColor: colors.background,
+                borderWidth: borders.medium,
+                borderColor: borders.color,
+              }
+            ]}
+            accessibilityLabel="Game Information"
+          >
+            <MaterialIcons name="info" size={18} color="#000000" />
+          </TouchableOpacity>
+        </View>
 
         {/* Hero Brand Section */}
         <View style={styles.heroContainer}>
@@ -165,5 +182,23 @@ const styles = StyleSheet.create({
   },
   smartButton: {
     width: '100%',
+  },
+  infoButtonContainer: {
+    position: 'absolute',
+    top: 60, // Moved down to be below status bar (typically 44-50px on most devices)
+    left: 16,
+    zIndex: 10,
+  },
+  infoButton: {
+    width: 36,
+    height: 36,
+    borderRadius: 0, // Sharp corners for neobrutalism
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#000000',
+    shadowOffset: { width: 2, height: 2 },
+    shadowOpacity: 1,
+    shadowRadius: 0,
+    elevation: 4,
   },
 });

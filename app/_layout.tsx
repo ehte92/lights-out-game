@@ -57,6 +57,22 @@ function RootLayoutContent() {
               animation: 'slide_from_right',
             }} 
           />
+          <Stack.Screen 
+            name="achievements" 
+            options={{ 
+              headerShown: false,
+              animation: 'slide_from_bottom',
+              presentation: 'modal',
+            }} 
+          />
+          <Stack.Screen 
+            name="gameinfo" 
+            options={{ 
+              headerShown: false,
+              animation: 'slide_from_bottom',
+              presentation: 'modal',
+            }} 
+          />
           <Stack.Screen name="+not-found" />
         </Stack>
       </ThemeProvider>

@@ -4,9 +4,12 @@ import {
   StyleSheet,
   ScrollView,
   StatusBar,
+  TouchableOpacity,
 } from 'react-native';
 import { Text } from 'react-native-paper';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { MaterialIcons } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
 import { useAppTheme, useAppTypography } from '../contexts/AppThemeContext';
 import { useGameStore } from '../stores/gameStore';
 import { PlayerLevelCard } from '../components/progression/PlayerLevelCard';
@@ -15,6 +18,7 @@ import { DetailedStats } from '../components/progression/DetailedStats';
 export const StatsScreen: React.FC = () => {
   const { colors } = useAppTheme();
   const typography = useAppTypography();
+  const router = useRouter();
   const {
     stats,
     progression,
@@ -48,7 +52,6 @@ export const StatsScreen: React.FC = () => {
       <View style={[styles.container, styles.atmosphericBackground]}>
         <StatusBar 
           barStyle="light-content" 
-          translucent={true}
           backgroundColor="transparent"
         />
         <SafeAreaView edges={['top']} style={styles.safeArea}>
@@ -68,7 +71,6 @@ export const StatsScreen: React.FC = () => {
     <View style={[styles.container, styles.atmosphericBackground]}>
       <StatusBar 
         barStyle="light-content" 
-        translucent={true}
         backgroundColor="transparent"
       />
       <SafeAreaView edges={['top']} style={styles.safeArea}>
@@ -202,6 +204,36 @@ export const StatsScreen: React.FC = () => {
                 ))}
               </View>
             )}
+            
+            {/* View All Achievements Button */}
+            <TouchableOpacity
+              style={[
+                styles.viewAllButton,
+                {
+                  backgroundColor: colors.secondary, // Hot pink
+                  borderWidth: 3,
+                  borderColor: '#000000',
+                }
+              ]}
+              onPress={() => router.push('/achievements')}
+            >
+              <Text style={[
+                typography.bodyLarge,
+                {
+                  color: colors.background,
+                  fontWeight: '900',
+                  textAlign: 'center',
+                }
+              ]}>
+                🏆 View All Achievements
+              </Text>
+              <MaterialIcons 
+                name="arrow-forward" 
+                size={20} 
+                color={colors.background}
+                style={styles.viewAllIcon}
+              />
+            </TouchableOpacity>
           </View>
 
           {/* Detailed Statistics */}
@@ -352,5 +384,22 @@ const styles = StyleSheet.create({
   factItem: {
     marginVertical: 8,
     paddingVertical: 8,
+  },
+  viewAllButton: {
+    borderRadius: 0, // Sharp corners for neobrutalism
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+    marginTop: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000000',
+    shadowOffset: { width: 4, height: 4 },
+    shadowOpacity: 1,
+    shadowRadius: 0,
+    elevation: 6,
+  },
+  viewAllIcon: {
+    marginLeft: 8,
   },
 });
