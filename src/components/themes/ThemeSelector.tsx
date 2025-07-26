@@ -1,14 +1,8 @@
 import React from 'react';
-import { View, StyleSheet, ScrollView } from 'react-native';
-import {
-  Surface,
-  Text,
-  Button,
-  Card,
-  Chip,
-} from 'react-native-paper';
+import { View, StyleSheet, Pressable, Platform } from 'react-native';
+import { Text } from 'react-native-paper';
 import { useGameTheme } from '../../contexts/GameThemeContext';
-import { useAppTheme } from '../../contexts/AppThemeContext';
+import { useAppTheme, useAppTypography, useAppBorders } from '../../contexts/AppThemeContext';
 import { ALL_THEMES } from '../../themes/gameThemes';
 
 export const ThemeSelector: React.FC = () => {
@@ -20,7 +14,9 @@ export const ThemeSelector: React.FC = () => {
     isTransitioning 
   } = useGameTheme();
   
-  const { paperTheme } = useAppTheme();
+  const { colors } = useAppTheme();
+  const typography = useAppTypography();
+  const borders = useAppBorders();
 
   const handleThemeSelect = (themeId: string) => {
     if (isThemeUnlocked(themeId) && !isTransitioning) {
@@ -28,141 +24,236 @@ export const ThemeSelector: React.FC = () => {
     }
   };
 
-  return (
-    <Surface style={[styles.container, { backgroundColor: paperTheme.colors.surface }]} elevation={1}>
-      <Text variant="headlineSmall" style={[styles.title, { color: paperTheme.colors.onSurface }]}>
-        Game Themes
-      </Text>
-      <Text variant="bodyMedium" style={[styles.subtitle, { color: paperTheme.colors.onSurfaceVariant }]}>
-        Customize your game experience
-      </Text>
-      
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.scrollView}>
-        <View style={styles.themeGrid}>
-          {ALL_THEMES.map((theme) => {
-            const isUnlocked = isThemeUnlocked(theme.id);
-            const isSelected = currentTheme.id === theme.id;
-            
-            return (
-              <Card 
-                key={theme.id} 
-                style={[
-                  styles.themeCard,
-                  isSelected && { borderColor: paperTheme.colors.primary, borderWidth: 2 }
-                ]}
-                onPress={() => handleThemeSelect(theme.id)}
-                disabled={!isUnlocked || isTransitioning}
-              >
-                <Card.Content style={styles.cardContent}>
-                  {/* Theme Preview */}
-                  <View style={styles.previewContainer}>
-                    <View style={styles.previewGrid}>
-                      <View 
-                        style={[
-                          styles.previewCell,
-                          { backgroundColor: theme.gameColors.cellOn }
-                        ]} 
-                      />
-                      <View 
-                        style={[
-                          styles.previewCell,
-                          { backgroundColor: theme.gameColors.cellOff }
-                        ]} 
-                      />
-                      <View 
-                        style={[
-                          styles.previewCell,
-                          { backgroundColor: theme.gameColors.cellOff }
-                        ]} 
-                      />
-                      <View 
-                        style={[
-                          styles.previewCell,
-                          { backgroundColor: theme.gameColors.cellOn }
-                        ]} 
-                      />
-                    </View>
-                  </View>
-                  
-                  {/* Theme Info */}
-                  <Text variant="titleSmall" style={styles.themeName}>
-                    {theme.name}
-                  </Text>
-                  <Text variant="bodySmall" style={styles.themeDescription} numberOfLines={2}>
-                    {theme.description}
-                  </Text>
-                  
-                  {/* Status Chip */}
-                  <View style={styles.statusContainer}>
-                    {isSelected && (
-                      <Chip mode="flat" compact textStyle={styles.chipText}>
-                        Active
-                      </Chip>
-                    )}
-                    {!isUnlocked && (
-                      <Chip mode="outlined" compact textStyle={styles.chipText}>
-                        Level {theme.unlockLevel}
-                      </Chip>
-                    )}
-                  </View>
-                  
-                  {/* Action Button */}
-                  {isUnlocked && !isSelected && (
-                    <Button
-                      mode="contained"
-                      onPress={() => handleThemeSelect(theme.id)}
-                      style={styles.selectButton}
-                      disabled={isTransitioning}
-                    >
-                      {isTransitioning ? 'Switching...' : 'Select'}
-                    </Button>
-                  )}
-                </Card.Content>
-              </Card>
-            );
-          })}
+  const renderThemeOption = (theme: typeof ALL_THEMES[0]) => {
+    const isUnlocked = isThemeUnlocked(theme.id);
+    const isSelected = currentTheme.id === theme.id;
+    
+    const handlePress = () => {
+      if (isUnlocked && !isTransitioning) {
+        handleThemeSelect(theme.id);
+      }
+    };
+    
+    const backgroundColor = isSelected ? colors.secondary : colors.background;
+    const textColor = isSelected ? colors.background : colors.onBackground;
+    const borderColor = borders.color;
+    
+    return (
+      <Pressable
+        key={theme.id}
+        style={[
+          styles.themeOption,
+          {
+            backgroundColor,
+            borderWidth: borders.thick,
+            borderColor,
+            // Neobrutalist shadow
+            ...Platform.select({
+              ios: {
+                shadowColor: '#000000',
+                shadowOffset: { width: 4, height: 4 },
+                shadowOpacity: isSelected ? 0 : 1,
+                shadowRadius: 0,
+              },
+              android: { elevation: isSelected ? 0 : 8 },
+            }),
+          },
+          !isUnlocked && styles.disabled,
+        ]}
+        onPress={handlePress}
+        disabled={!isUnlocked || isTransitioning}
+      >
+        {/* Theme Preview Grid */}
+        <View style={styles.previewContainer}>
+          <View style={styles.previewGrid}>
+            {/* 2x2 grid showing theme colors */}
+            <View 
+              style={[
+                styles.previewCell,
+                { backgroundColor: theme.gameColors.cellOn }
+              ]} 
+            />
+            <View 
+              style={[
+                styles.previewCell,
+                { backgroundColor: theme.gameColors.cellOff }
+              ]} 
+            />
+            <View 
+              style={[
+                styles.previewCell,
+                { backgroundColor: theme.gameColors.cellOff }
+              ]} 
+            />
+            <View 
+              style={[
+                styles.previewCell,
+                { backgroundColor: theme.gameColors.cellOn }
+              ]} 
+            />
+          </View>
         </View>
-      </ScrollView>
-      
-      {/* Debug Info */}
-      <Surface style={styles.debugInfo} elevation={0}>
-        <Text variant="bodySmall" style={{ color: paperTheme.colors.onSurfaceVariant }}>
-          Unlocked: {unlockedThemes.length}/{ALL_THEMES.length} themes
+        
+        {/* Theme Name */}
+        <Text
+          style={[
+            typography.titleMedium,
+            {
+              color: textColor,
+              fontWeight: '900',
+              textAlign: 'center',
+              marginBottom: 4,
+            },
+          ]}
+        >
+          {theme.name}
         </Text>
-      </Surface>
-    </Surface>
+        
+        {/* Status Indicator */}
+        <View style={styles.statusIndicator}>
+          {isSelected && (
+            <View style={[
+              styles.statusBadge,
+              {
+                backgroundColor: colors.background,
+                borderWidth: borders.thin,
+                borderColor: colors.onBackground,
+              }
+            ]}>
+              <Text style={[
+                typography.bodySmall,
+                {
+                  color: colors.onBackground,
+                  fontWeight: '900',
+                  fontSize: 10,
+                }
+              ]}>
+                ACTIVE
+              </Text>
+            </View>
+          )}
+          {!isUnlocked && (
+            <View style={[
+              styles.statusBadge,
+              {
+                backgroundColor: 'rgba(0,0,0,0.7)',
+                borderWidth: borders.thin,
+                borderColor: colors.onBackground,
+              }
+            ]}>
+              <Text style={[
+                typography.bodySmall,
+                {
+                  color: colors.background,
+                  fontWeight: '900',
+                  fontSize: 10,
+                }
+              ]}>
+                LVL {theme.unlockLevel}
+              </Text>
+            </View>
+          )}
+        </View>
+      </Pressable>
+    );
+  };
+  
+  return (
+    <View
+      style={[
+        styles.container,
+        {
+          backgroundColor: colors.background,
+          borderWidth: borders.thick,
+          borderColor: borders.color,
+          // Neobrutalist shadow
+          ...Platform.select({
+            ios: {
+              shadowColor: '#000000',
+              shadowOffset: { width: 4, height: 4 },
+              shadowOpacity: 1,
+              shadowRadius: 0,
+            },
+            android: { elevation: 8 },
+          }),
+        },
+      ]}
+    >
+      <Text
+        style={[
+          typography.headlineSmall,
+          {
+            color: colors.onBackground,
+            fontWeight: '900',
+            textAlign: 'center',
+            marginBottom: 8,
+          },
+        ]}
+      >
+        Visual Style
+      </Text>
+      <Text
+        style={[
+          typography.bodyMedium,
+          {
+            color: colors.onSurfaceVariant,
+            fontWeight: '600',
+            textAlign: 'center',
+            marginBottom: 20,
+          },
+        ]}
+      >
+        Choose your game theme
+      </Text>
+      
+      <View style={styles.themesGrid}>
+        {ALL_THEMES.map(renderThemeOption)}
+      </View>
+      
+      {/* Progress Info */}
+      <View style={[
+        styles.progressInfo,
+        {
+          backgroundColor: 'rgba(0,0,0,0.1)',
+          borderWidth: borders.thin,
+          borderColor: borders.color,
+        }
+      ]}>
+        <Text style={[
+          typography.bodySmall,
+          {
+            color: colors.onBackground,
+            fontWeight: '700',
+            textAlign: 'center',
+          }
+        ]}>
+          UNLOCKED: {unlockedThemes.length}/{ALL_THEMES.length} THEMES
+        </Text>
+      </View>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
-    padding: 16,
-    borderRadius: 16,
-    margin: 16,
+    borderRadius: 0, // Sharp corners for neobrutalism
+    padding: 20,
+    marginVertical: 8,
+    marginHorizontal: 16,
   },
-  title: {
-    textAlign: 'center',
-    marginBottom: 4,
-  },
-  subtitle: {
-    textAlign: 'center',
-    marginBottom: 16,
-  },
-  scrollView: {
-    marginBottom: 16,
-  },
-  themeGrid: {
+  themesGrid: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
     gap: 12,
-    paddingHorizontal: 4,
   },
-  themeCard: {
-    width: 160,
-    borderRadius: 12,
-  },
-  cardContent: {
+  themeOption: {
+    width: '47%', // Two columns with gap
+    borderRadius: 0, // Sharp corners for neobrutalism
+    padding: 16,
     alignItems: 'center',
-    padding: 12,
+    minHeight: 140,
+    justifyContent: 'center',
   },
   previewContainer: {
     marginBottom: 12,
@@ -170,39 +261,34 @@ const styles = StyleSheet.create({
   previewGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    width: 40,
-    height: 40,
+    width: 32,
+    height: 32,
   },
   previewCell: {
-    width: 18,
-    height: 18,
+    width: 14,
+    height: 14,
     margin: 1,
-    borderRadius: 3,
+    borderRadius: 0, // Sharp corners for neobrutalism
+    borderWidth: 1,
+    borderColor: '#000000',
   },
-  themeName: {
-    textAlign: 'center',
-    marginBottom: 4,
-    fontWeight: 'bold',
+  statusIndicator: {
+    marginTop: 8,
+    alignItems: 'center',
+    minHeight: 20,
   },
-  themeDescription: {
-    textAlign: 'center',
-    marginBottom: 8,
-    minHeight: 32,
+  statusBadge: {
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 0, // Sharp corners for neobrutalism
   },
-  statusContainer: {
-    marginBottom: 8,
-    minHeight: 24,
-  },
-  chipText: {
-    fontSize: 10,
-  },
-  selectButton: {
-    width: '100%',
-  },
-  debugInfo: {
+  progressInfo: {
+    marginTop: 16,
     paddingVertical: 8,
     paddingHorizontal: 12,
-    borderRadius: 8,
-    backgroundColor: 'rgba(0,0,0,0.05)',
+    borderRadius: 0, // Sharp corners for neobrutalism
+  },
+  disabled: {
+    opacity: 0.5,
   },
 });
